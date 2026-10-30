@@ -4,7 +4,7 @@ Plataforma de informação e análise do transporte coletivo municipal de Canoas
 
 **Versão 0.1.0 — programação e território integrados; GPS GoBus ainda não homologado.** Não é declarado atendimento integral dos critérios da versão 1.0. Não são gerados veículos, paradas, viagens realizadas ou infrações fictícios.
 
-[Aplicação pública — endereço de publicação](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
+[Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
 ## Dados efetivamente obtidos
 
