@@ -31,6 +31,8 @@ def collect(days=5, root=ROOT, interval=0.75):
     db = sqlite3.connect(private / 'static-history.sqlite')
     db.execute('CREATE TABLE IF NOT EXISTS snapshot(kind TEXT, natural_key TEXT, hash TEXT, observed_at TEXT, payload TEXT, PRIMARY KEY(kind,natural_key,hash))')
     db.execute('CREATE TABLE IF NOT EXISTS run(started_at TEXT PRIMARY KEY, ended_at TEXT, status TEXT, errors TEXT)')
+    db.execute('INSERT INTO run VALUES (?,?,?,?)', (started, None, 'running', '[]'))
+    db.commit()
     routes, departures, errors, date_records = {}, [], [], []
     try:
         dates, date_provenance = ngs.dates()
@@ -89,7 +91,7 @@ def collect(days=5, root=ROOT, interval=0.75):
                 db.execute('INSERT OR IGNORE INTO snapshot VALUES (?,?,?,?,?)', (kind, key(value), digest, utcnow(), payload))
         dump(public / 'network.json', output)
         dump(root / 'research/collection-evidence.json', {'started_at': started, 'ended_at': utcnow(), 'requests': http.records, 'errors': errors})
-        db.execute('INSERT INTO run VALUES (?,?,?,?)', (started, utcnow(), output['status'], json.dumps(errors)))
+        db.execute('INSERT OR REPLACE INTO run VALUES (?,?,?,?)', (started, utcnow(), output['status'], json.dumps(errors)))
         db.commit()
         print(json.dumps({'event': 'done', 'routes': len(routes), 'departures': len(departures), 'errors': len(errors)}, ensure_ascii=False), flush=True)
         return output

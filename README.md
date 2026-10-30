@@ -70,7 +70,7 @@ PYTHONPATH=pipeline .venv/bin/pytest -q
 PYTHONPATH=pipeline .venv/bin/python scripts/validate_public.py
 ```
 
-Resultado local: **55 testes Python e 10 testes TypeScript/React aprovados**, lint e build de produção aprovados. Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
+Resultado local: **57 testes Python e 10 testes TypeScript/React aprovados**, lint e build de produção aprovados. Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
 
 ## Atualização dos dados e publicação
 

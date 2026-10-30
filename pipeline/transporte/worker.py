@@ -21,6 +21,7 @@ def stop(*_):
 
 def once(store, client, url, token=None):
     run={'id':str(uuid.uuid4()),'started_at':utcnow(),'status':'running','accepted':0,'rejected':0}
+    store.save_run(run)
     try:
         response=client.get(url,headers={'Authorization':'Bearer '+token} if token else {})
         response.raise_for_status()

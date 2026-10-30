@@ -97,7 +97,7 @@ class Store:
 
     def save_run(self, run):
         with self.connection() as connection:
-            self.execute(connection,'INSERT INTO collection_run VALUES (?,?,?,?,?,?,?)',(run['id'],run['started_at'],run.get('ended_at'),run['status'],run.get('accepted',0),run.get('rejected',0),run.get('message')))
+            self.execute(connection,'''INSERT INTO collection_run VALUES (?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET ended_at=excluded.ended_at,status=excluded.status,accepted=excluded.accepted,rejected=excluded.rejected,message=excluded.message''' ,(run['id'],run['started_at'],run.get('ended_at'),run['status'],run.get('accepted',0),run.get('rejected',0),run.get('message')))
 
     def events(self, vehicle=None, route=None, start=None, end=None, limit=1000):
         clauses,params=[],[]

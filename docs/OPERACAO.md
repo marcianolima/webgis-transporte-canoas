@@ -85,3 +85,5 @@ API/SQLite e contratos foram testados localmente. Docker/PostgreSQL/PostGIS, TLS
 ## Compatibilidade cartográfica
 
 MapLibre é o renderizador principal. Se WebGL não estiver disponível, a aplicação usa Leaflet/SVG com os mesmos polígonos locais. O fundo viário OSM é opcional e vem desligado: assim o mapa territorial abre sem depender de tiles ou chaves externas. O navegador de teste recebeu tiles de bloqueio do servidor OSM; esse fato não invalida as camadas locais. Para publicação, respeitar a política do fornecedor de tiles; não prefetch, não proxy para contornar bloqueios. Nenhuma chave CARTO ou de terceiros foi incorporada.
+
+As execuções estáticas e do worker registram `running` antes da consulta remota. Uma interrupção abrupta deixa uma execução sem encerramento, visível para diagnóstico, sem declará-la bem sucedida. Após recuperação, conferir essas entradas e os dados persistidos antes de reprocessar.

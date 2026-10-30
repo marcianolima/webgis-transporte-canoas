@@ -6,13 +6,15 @@ Versão 0.1.0 com programação real da Sogal/NGS e análise territorial. Reposi
 
 Coleta final: **81 linhas distintas, 4.990 saídas programadas, cinco datas, zero erros**. Registros por data e amostras são verificáveis nos arquivos públicos e no relatório de coleta. Bairros: 18; setores: 659. Todos os registros públicos passaram pela verificação de origem, chaves, horários, coordenadas e ausência de fixtures sintéticas. Produtos públicos somam aproximadamente 4,1 MB sem compressão, antes dos bundles do frontend.
 
+A revisão final também corrigiu o retorno ao topo ao trocar de página e o registro persistente do início de cada coleta. O código de interface foi formatado para facilitar manutenção.
+
 A versão não cumpre ainda os critérios completos da 1.0: a API GPS municipal não foi homologada e o backend municipal não está implantado.
 
 ## Testes executados
 
 | Verificação | Resultado observado |
 | --- | --- |
-| Python / pytest | 55 aprovados |
+| Python / pytest | 57 aprovados |
 | TypeScript/React / Vitest | 10 aprovados |
 | ESLint | Aprovado |
 | TypeScript + Vite build de produção | Aprovado |
