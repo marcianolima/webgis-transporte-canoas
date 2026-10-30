@@ -1,0 +1,86 @@
+name: Testes, dados estáticos e GitHub Pages
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      refresh_data:
+        description: Atualizar programação pública da Sogal antes do build
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    - cron: '20 8 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - run: npm ci
+      - run: pip install -r requirements.lock
+      - uses: actions/cache@v4
+        if: github.event_name == 'schedule' || inputs.refresh_data
+        with:
+          path: var
+          key: static-source-${{ github.run_id }}
+          restore-keys: static-source-
+      - name: Atualizar dados programados (não coleta GPS)
+        if: github.event_name == 'schedule' || inputs.refresh_data
+        env:
+          PYTHONPATH: pipeline
+        run: |
+          python -m transporte.collect --days 5
+          python scripts/prepare_catalogue.py
+      - name: Testes Python e validação dos dados públicos
+        env:
+          PYTHONPATH: pipeline
+        run: |
+          pytest -q
+          python scripts/validate_public.py
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+        env:
+          VITE_PUBLIC_API_BASE: ${{ vars.VITE_PUBLIC_API_BASE }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: evidencias-coleta-${{ github.run_id }}
+          path: |
+            research/collection-evidence.json
+            var/static-history.sqlite
+          retention-days: 30
+      - uses: actions/upload-pages-artifact@v4
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: dist
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4

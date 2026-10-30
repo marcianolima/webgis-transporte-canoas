@@ -1,0 +1,26 @@
+[
+  {
+    "url": "http://gobus.siumobile.com.br:6060/siumobiletacomapp/siumobile-ws-v01/rest/ws/buscarLinhas/retornoJSONListaLinhas",
+    "observed_at": "2026-10-30T22:28:44.773585+00:00",
+    "classification": "hypothesis_host_not_from_apk",
+    "error": "HTTP Error 503: Service Unavailable"
+  },
+  {
+    "url": "https://gobus.siumobile.com.br/siumobiletacomapp/siumobile-ws-v01/rest/ws/buscarLinhas/retornoJSONListaLinhas",
+    "observed_at": "2026-10-30T22:28:44.774659+00:00",
+    "classification": "hypothesis_host_not_from_apk",
+    "error": "HTTP Error 503: Service Unavailable"
+  },
+  {
+    "url": "http://teuonibus.siumobile.com.br:6060/siumobiletacomapp/siumobile-ws-v01/rest/ws/buscarLinhas/retornoJSONListaLinhas",
+    "observed_at": "2026-10-30T22:28:48.182447+00:00",
+    "classification": "hypothesis_host_not_from_apk",
+    "error": "HTTP Error 503: Service Unavailable"
+  },
+  {
+    "url": "http://gobus.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/buscarLinhas/retornoJSONListaLinhas",
+    "observed_at": "2026-10-30T22:28:50.081360+00:00",
+    "classification": "hypothesis_host_not_from_apk",
+    "error": "HTTP Error 503: Service Unavailable"
+  }
+]

@@ -1,0 +1,16 @@
+[
+  {
+    "file": "bairros-oficiais.geojson",
+    "source": "GeoCanoas / BAIRROSOFICIAL",
+    "retrieved_at": "2026-10-30T22:41:48.311754+00:00",
+    "sha256": "ba101c0f9e408d1329f105037f5169d35840518a708337aede660ec0f36f6e33",
+    "upstream_url": "https://raw.githubusercontent.com/marcianolima/webgis-empreender-canoas/main/public/data/bairros-oficiais.geojson"
+  },
+  {
+    "file": "censo2022-setores.geojson",
+    "source": "IBGE / WebGIS Empreender Canoas",
+    "retrieved_at": "2026-10-30T22:41:48.311754+00:00",
+    "sha256": "2432bc298737fd94c00a9f65260e032a792546a785650174880b059c5fa82799",
+    "upstream_url": "https://raw.githubusercontent.com/marcianolima/webgis-empreender-canoas/main/public/data/censo2022-setores.geojson"
+  }
+]

@@ -1,0 +1,16 @@
+# Integrar a um virtualhost municipal com TLS já configurado.
+limit_req_zone $binary_remote_addr zone=transporte:10m rate=5r/s;
+server {
+    listen 443 ssl;
+    server_name transporte-api.EXEMPLO.gov.br;
+    # ssl_certificate /caminho/certificado.pem;
+    # ssl_certificate_key /caminho/chave.pem;
+    client_max_body_size 64k;
+    location / {
+        limit_req zone=transporte burst=10 nodelay;
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}

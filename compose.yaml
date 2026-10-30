@@ -1,0 +1,55 @@
+services:
+  db:
+    image: postgis/postgis:16-3.5
+    environment:
+      POSTGRES_USER: transporte
+      POSTGRES_DB: transporte
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Defina POSTGRES_PASSWORD no servidor}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: [CMD-SHELL, 'pg_isready -U transporte -d transporte']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      dockerfile: infra/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://transporte:${POSTGRES_PASSWORD}@db:5432/transporte
+      ADMIN_API_KEY: ${ADMIN_API_KEY:?Defina ADMIN_API_KEY com pelo menos 32 caracteres}
+      PUBLIC_ORIGINS: ${PUBLIC_ORIGINS:-https://marcianolima.github.io}
+      SOURCE_HOMOLOGATED: ${SOURCE_HOMOLOGATED:-false}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ['127.0.0.1:8000:8000']
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+  worker:
+    profiles: [gps]
+    build:
+      context: .
+      dockerfile: infra/Dockerfile
+    command: [python, -m, transporte.worker]
+    environment:
+      DATABASE_URL: postgresql://transporte:${POSTGRES_PASSWORD}@db:5432/transporte
+      SOURCE_HOMOLOGATED: ${SOURCE_HOMOLOGATED:-false}
+      GPS_FEED_URL: ${GPS_FEED_URL:-}
+      GPS_FEED_ALLOWED_HOST: ${GPS_FEED_ALLOWED_HOST:-}
+      GPS_FEED_TOKEN: ${GPS_FEED_TOKEN:-}
+      GPS_INTERVAL_SECONDS: ${GPS_INTERVAL_SECONDS:-60}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+volumes:
+  postgres_data:
