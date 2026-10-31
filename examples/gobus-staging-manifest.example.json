@@ -1,11 +1,10 @@
 {
-  "_comment": "Modelo ilustrativo. Substitua todos os IDs pelos retornados pela TACOM e confirme as associações com o cadastro NGS antes de usar.",
+  "_comment": "MODELO. Canoas identificada como codcid=4 na praça MPA pela TACOM em 30/10/2026; os IDs de linha 17 e itinerário 123 são apenas exemplos fictícios, ainda não homologados.",
   "municipality_code": "4304606",
   "city": "CAN",
   "authorization_confirmed": false,
   "city_confirmed": false,
   "reference_date": "2026-10-30",
-  "cities_file": "cidades-VALIDADO.jsonp",
   "lines_file": "linhas-VALIDADO.jsonp",
   "mapping": [
     {
@@ -22,5 +21,7 @@
         }
       ]
     }
-  ]
+  ],
+  "line_cities_file": "cidades_linhas-MPA-CAPTURA.jsonp",
+  "canoas_city_id": "4"
 }
