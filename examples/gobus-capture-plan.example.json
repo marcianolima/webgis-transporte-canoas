@@ -1,8 +1,10 @@
 {
-  "note": "EXEMPLO, não executar sem revisar IDs e autorização. Nenhum ID abaixo foi homologado.",
+  "note": "EXEMPLO: troque os IDs após conferir linhas TACOM do codcid=4. Não executar sem autorização explícita.",
   "authorized": false,
   "allow_plain_http": false,
-  "city": "CAN",
+  "municipality_code": "4304606",
+  "city": "MPA",
+  "canoas_city_id": "4",
   "resources": [
     {
       "kind": "paradas_geograficas",
@@ -10,7 +12,9 @@
     },
     {
       "kind": "itinerario",
-      "itinerario": "123"
+      "itinerario": "123",
+      "siu_line_id": "17",
+      "relation_approved": false
     }
   ]
 }
