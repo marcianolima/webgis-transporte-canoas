@@ -75,6 +75,13 @@ def main():
             assert row['known_stop_ids']==len(source_ids) and row['located_stop_ids']==len(source_ids & located)
             assert row['unlocated_stop_ids']==len(source_ids-located)
             assert len(row['source_sha256'])==64 and timestamp(row['fetched_at'])
+    # GitHub Pages é estritamente estático: telemetria não pode entrar no build.
+    static_vehicles=json.loads((data/'vehicles.json').read_text())
+    assert static_vehicles.get('status')=='unavailable'
+    assert static_vehicles.get('vehicles')==[]
+    assert static_vehicles.get('generated_at') is None
+    for private_name in ('live-feed.json','live-state.json','capture-manifest.json'):
+        assert not (data/private_name).exists(),private_name
     for name in ['route-shapes.geojson','stops.geojson','transport-geography.json']+(['stop-inventory.json'] if inventory_path.exists() else []):
         assert not any(key in (data/name).read_text() for key in ['numVeicGestor','vehicle_id','"body":'])
     assert not json.loads((data/'boundary.geojson').read_text())['features'][0]['properties']['is_official_municipal_boundary']
