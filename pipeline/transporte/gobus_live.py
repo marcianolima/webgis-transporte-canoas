@@ -29,7 +29,9 @@ MUNICIPALITY = "4304606"
 
 def code(value):
     text = str(value or "").strip()
-    return text.lstrip("0") or "0" if text.isdecimal() else ""
+    if not text.isdecimal():
+        return ""
+    return text.lstrip("0") or "0"
 
 
 def iso(dt: datetime):
@@ -82,7 +84,7 @@ class LiveCollector:
         retries=2, clock: Callable=lambda: datetime.now(timezone.utc),
         monotonic: Callable=time.monotonic, sleep: Callable=time.sleep,
         jitter: Callable=lambda: random.uniform(0, 1),
-        state=None
+        state=None, cache=None
     ):
         if spacing < 15 or max_requests < 1 or max_requests > 60 or not 0 <= retries <= 2:
             raise ValueError("Limites de frequência/orçamento inválidos")
@@ -97,7 +99,7 @@ class LiveCollector:
         self.state = dict(state or {})
         self.state.setdefault("cursor", 0)
         self.state.setdefault("positions", {})
-        self.cache = {}
+        self.cache = cache if cache is not None else {}
         self.requests = 0
         self.cache_hits = 0
         self.last = None
@@ -295,9 +297,10 @@ def main():
     shapes = json.loads((data / "route-shapes.geojson").read_text())
     neighborhoods = json.loads((data / "bairros-oficiais.geojson").read_text())
     previous = json.loads(state_path.read_text()) if state_path.is_file() else {}
+    cache = {}  # Cache exclusivamente em memória, nunca no GitHub Pages.
     with httpx.Client(follow_redirects=False, trust_env=False) as client:
         while True:
-            collector = LiveCollector(client, spacing=args.interval,
+            collector = LiveCollector(client, cache=cache, spacing=args.interval,
                                       max_requests=args.max_requests, state=previous)
             report = collector.once(inventory, shapes, neighborhoods,
                                     stop_queries=args.stop_queries,
