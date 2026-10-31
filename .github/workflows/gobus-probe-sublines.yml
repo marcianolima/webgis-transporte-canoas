@@ -1,0 +1,26 @@
+name: GoBus TACOM · estrutura de sublinhas
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe-sublines.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Verificar sublinhas de uma linha municipal em três GET
+        env:
+          PYTHONPATH: pipeline:.
+        run: python scripts/gobus_probe_sublines.py --autorizado --aceito-http
+      - name: Escopo
+        if: always()
+        run: |
+          echo "Somente catálogo de cidades, linhas e estrutura de sublinhas." >> "$GITHUB_STEP_SUMMARY"
+          echo "Sem consulta GPS, sem enumeração de IDs, sem escrita ou dados pessoais." >> "$GITHUB_STEP_SUMMARY"
