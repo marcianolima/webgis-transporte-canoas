@@ -48,6 +48,15 @@ def ingest(store, collector, inventory, shapes, area, stop_geometries=None):
             except (ValueError,TypeError):
                 run["rejected"]+=1
         run["accepted"]=store.insert(normalized)
+        # Somente contagens de coleta em métricas; IDs, posições e payloads
+        # permanecem restritos ao histórico autenticado.
+        indicators = result.get("diagnostics", {})
+        allowed = ("sampled_stops", "active_itineraries", "queried_itineraries",
+                   "requests", "failures", "cache_hits", "access_denied",
+                   "rate_limited", "quota_exhausted",
+                   "requests_last_hour", "requests_last_day")
+        run["message"]=json.dumps({k:indicators[k] for k in allowed if k in indicators},
+                                  separators=(",",":"),ensure_ascii=False)
         for vid in {x["vehicle_id"] for x in normalized}:
             history=store.history(vehicle=vid,start=(datetime.now(timezone.utc)-timedelta(hours=2)).isoformat())
             store.save_events(history)
