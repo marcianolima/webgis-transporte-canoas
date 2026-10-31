@@ -64,3 +64,19 @@ O código também contém consultas envolvendo cartão PNE e operações como `e
 6. Para liberar a integração: confirmar `cidadesApp`, consultar apenas exemplos de linhas/itinerário/paradas autorizados, verificar município e situação operacional, documentar correspondência SIU↔NGS, coletar amostra autorizada de posições, confirmar timestamp e limites, implantar proxy/API segura e só então produzir PMTiles reais.
 
 **Limite decisivo:** descobrir a API do aplicativo **não é o mesmo que ter os dados operacionais**. O aplicativo 1.29.1.2 é anterior à versão 1.31.3 observada na loja; requer validação de eventuais alterações de backend.
+
+## Como realizar a homologação manual com a operadora
+
+Há um verificador **opt-in de uma única requisição**, fora da rotina de CI e sem envio de registros ao GitHub: `scripts/verify_gobus_endpoint.py`. Ele exige declaração explícita de autorização e, como o APK usa HTTP, reconhecimento do risco de transporte sem TLS. Respostas são armazenadas em `var/gobus/`, excluído da publicação.
+
+```bash
+# Executar apenas de rede/autorização compatíveis com as condições do serviço:
+PYTHONPATH=pipeline python scripts/verify_gobus_endpoint.py cidades --autorizado --permitir-http
+PYTHONPATH=pipeline python scripts/verify_gobus_endpoint.py linhas --autorizado --permitir-http
+# Só depois de identificar a cidade e um itinerário real pela fonte:
+PYTHONPATH=pipeline python scripts/verify_gobus_endpoint.py itinerario --itinerario 123 --cidade CAN --autorizado --permitir-http
+# Exemplo de conversão local de um payload já capturado:
+PYTHONPATH=pipeline python scripts/gobus_extract.py itinerario var/gobus/ARQUIVO.jsonp --itinerario-id 123 > var/gobus/itinerario-123.geojson
+```
+
+`123` e `CAN` no exemplo **não são valores homologados**; substituir apenas após validar o cadastro de cidade e o código real. Não criar agendamento de polling, não executar recursos que emitem avisos ou alarmes e não publicar respostas brutas sem avaliação de origem, segurança, finalidade e licenciamento.
