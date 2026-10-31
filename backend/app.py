@@ -10,6 +10,7 @@ from pathlib import Path
 from collections import defaultdict, deque
 from threading import Lock
 import time
+from ipaddress import ip_address, ip_network
 from fastapi import FastAPI, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +25,11 @@ def create_app(store=None):
     db=store or Store();db.initialize()
     request_times = defaultdict(deque)
     request_lock = Lock()
+    public_limit = max(1, min(10000, int(os.getenv('PUBLIC_API_LIMIT_PER_MINUTE','60'))))
+    # Proxy confiável SOMENTE por CIDR explícito: não aceitar X-Real-IP de clientes diretos.
+    proxy_networks = [ip_network(x.strip(), strict=False)
+                      for x in os.getenv('TRUSTED_PROXY_CIDRS','').split(',')
+                      if x.strip()]
     origins=[v.strip() for v in os.getenv('PUBLIC_ORIGINS','https://marcianolima.github.io').split(',') if v.strip()]
     app.add_middleware(CORSMiddleware,allow_origins=origins,allow_methods=['GET'],allow_headers=[],allow_credentials=False)
 
@@ -70,14 +76,28 @@ def create_app(store=None):
         # Defesa em profundidade; proxy Nginx aplica a limitação distribuída.
         # Somente endereço de conexão, nunca X-Forwarded-For arbitrário.
         identity = request.client.host if request.client else 'unknown'
+        if proxy_networks:
+            try:
+                remote = ip_address(identity)
+                if any(remote in net for net in proxy_networks):
+                    forwarded = request.headers.get('x-real-ip', '')
+                    identity = str(ip_address(forwarded))
+            except ValueError:
+                # Não confiar em cabeçalhos sem origem explicitamente autorizada.
+                pass
         now = time.monotonic()
         with request_lock:
             window = request_times[identity]
             while window and now-window[0] >= 60:
                 window.popleft()
-            if len(window) >= 60:
+            if len(window) >= public_limit:
                 raise HTTPException(429,'Muitas consultas de veículos',headers={'Retry-After':'60'})
             window.append(now)
+            # Evitar crescimento ilimitado da tabela de IPs em serviço público.
+            if len(request_times) > 20000:
+                for key in list(request_times):
+                    if not request_times[key] or now-request_times[key][-1] >= 60:
+                        request_times.pop(key, None)
 
     @app.get('/v1/vehicles')
     def vehicles(request: Request, _limit=Depends(vehicle_limit)):
