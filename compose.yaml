@@ -73,7 +73,11 @@ services:
       - /var/cache/nginx
       - /var/run
       - /tmp
-    cap_drop: [ALL]
+    # O master do Nginx precisa criar diretórios temporários e baixar
+    # privilégios para o worker; remover CHOWN/SETUID quebraria o contêiner.
+    cap_drop: [NET_RAW, NET_ADMIN]
+    security_opt:
+      - no-new-privileges:true
   gobus-live:
     profiles: [gobus-live]
     build:
