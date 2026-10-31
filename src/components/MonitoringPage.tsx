@@ -2,6 +2,7 @@ import { ArrowUpRight, BusFront, Database, Radio, RefreshCw, Search } from "luci
 import type { AppData, Vehicle } from "../types";
 import { Card, Panel, Empty } from "./Layout";
 import { brDate, number } from "../data";
+import { useCollectorHealth } from "../hooks/useCollectorHealth";
 
 /** Tela de monitoramento: referências efetivamente recebidas, sem simulação. */
 export default function MonitoringPage({
@@ -14,6 +15,7 @@ export default function MonitoringPage({
   setQuery: (value: string) => void;
   github: string;
 }) {
+  const health = useCollectorHealth(import.meta.env.VITE_PUBLIC_API_BASE);
   return (<>
 
                   <div className="metrics">
@@ -48,12 +50,25 @@ export default function MonitoringPage({
                       icon={RefreshCw}
                     />
                     <Card
-                      title="Histórico operacional"
-                      value="Pendente"
-                      description="Worker e armazenamento a implantar"
+                      title="Coleta técnica"
+                      value={health?.last_run_at ? brDate(health.last_run_at, true) : "Não implantada"}
+                      description={health?.last_run_at
+                        ? `${number(health.accepted_last_run)} posições aceitas na última rodada; não equivale à frota total`
+                        : "Servidor operacional não conectado a esta aplicação"}
                       icon={Database}
                     />
                   </div>
+                  {health && (
+                    <p className="caption" role="status">
+                      Última coleta: {health.status} · {number(health.source_diagnostics.sampled_stops ?? null)} paradas amostradas
+                      · {number(health.source_diagnostics.active_itineraries ?? null)} itinerários com previsão
+                      · {number(health.source_diagnostics.requests ?? null)} consultas à origem.
+                      {health.source_diagnostics.rate_limited || health.source_diagnostics.quota_exhausted
+                        ? " Coleta limitada ou suspensa pelo orçamento de requisições."
+                        : ""}
+                      A ausência de observações não comprova ausência de ônibus ou cancelamento.
+                    </p>
+                  )}
                   <Panel
                     title="Monitoramento da frota"
                     subtitle="Coordenadas reais consultadas, sem interpolação ou simulação"
