@@ -60,3 +60,41 @@ def test_event_history_and_review(store,monkeypatch):
     r=c.post('/internal/events/'+events[0]['id']+'/reviews',headers=headers,json={'classification':'inconclusive','reason':'SYNTHETIC: necessário verificar erro de GPS.'})
     assert r.status_code==200
     with store.connection() as conn:assert conn.execute('SELECT COUNT(*) FROM audit_review').fetchone()[0]==1
+
+def test_reference_public_api_exposes_consultation_metadata(store,sample,monkeypatch):
+    monkeypatch.setenv('PUBLIC_POSITIONS_ENABLED','true')
+    monkeypatch.setenv('SOURCE_HOMOLOGATED','false')
+    v=sample|{
+        'fetched_at':sample['observed_at'],
+        'time_basis':'client_fetch',
+        'source_observed_at':None,
+        'signal_status':'SC',
+        'stale_polls':3,
+        'bearing':None,
+        'source_itinerary_id':'2457',
+        'route_relation':'reference_not_homologated'
+    }
+    store.insert([v])
+    c=TestClient(create_app(store))
+    result=c.get('/v1/vehicles')
+    assert result.status_code==200
+    assert result.headers['Cache-Control']=='no-store'
+    doc=result.json()
+    assert doc['status']=='reference' and len(doc['vehicles'])==1
+    row=doc['vehicles'][0]
+    assert row['time_basis']=='client_fetch'
+    assert row['signal_status']=='SC' and row['stale_polls']==3
+    assert row['source_itinerary_id']=='2457'
+    assert row['source_observed_at'] is None
+    assert row['route_relation']=='reference_not_homologated'
+    assert 'payload' not in result.text
+
+
+def test_public_vehicle_api_has_rate_limit(store,monkeypatch):
+    monkeypatch.delenv('SOURCE_HOMOLOGATED',raising=False)
+    monkeypatch.delenv('PUBLIC_POSITIONS_ENABLED',raising=False)
+    c=TestClient(create_app(store))
+    assert all(c.get('/v1/vehicles').status_code==200 for _ in range(60))
+    response=c.get('/v1/vehicles')
+    assert response.status_code==429
+    assert response.headers['Retry-After']=='60'
