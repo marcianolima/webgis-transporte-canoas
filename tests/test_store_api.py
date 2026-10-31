@@ -138,3 +138,12 @@ def test_untrusted_forwarded_client_ip_cannot_bypass_limit(store,monkeypatch):
     client=TestClient(create_app(store))
     assert client.get('/v1/vehicles',headers={'X-Real-IP':'203.0.113.2'}).status_code==200
     assert client.get('/v1/vehicles',headers={'X-Real-IP':'203.0.113.3'}).status_code==429
+
+
+
+def test_empty_source_does_not_claim_live_availability(store,monkeypatch):
+    monkeypatch.setenv('SOURCE_HOMOLOGATED','true')
+    monkeypatch.setenv('PUBLIC_POSITIONS_ENABLED','true')
+    result=TestClient(create_app(store)).get('/v1/vehicles').json()
+    assert result['status']=='reference'
+    assert result['vehicles']==[] and result['generated_at'] is None
