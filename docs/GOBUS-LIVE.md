@@ -80,6 +80,32 @@ No `GitHub Pages`, publicar **apenas a URL HTTPS da API própria** pela variáve
 
 **Um proxy HTTPS da API municipal NÃO autentica o trecho HTTP municipal → TACOM.** Negociar origem HTTPS/TLS, VPN ou canal privado autenticado com o fornecedor. O Nginx só protege o trecho público browser → API; é insuficiente para garantir a integridade do fornecedor legado.
 
+## Implantação HTTPS completa no Docker Compose
+
+O perfil opcional `edge` executa `nginx:stable-alpine` na porta interna 8443, publicada como 443 no host. Há dois limites de requisição: Nginx por IP real do cliente (30 GET/min em `/v1/vehicles`) e API por endereço remoto confiável (padrão 60/min). A porta de aplicação 8000 fica vinculada somente a `127.0.0.1` no host, e o navegador nunca acessa o HTTP da TACOM.
+
+**Pré-requisitos fora do GitHub:** servidor/VPS ou host municipal com Docker, DNS próprio, certificado TLS válido e chave correspondente, armazenamento persistente, configuração de backups e concordância formal com o regime de dados GPS. Não há servidor de produção nem DNS configurados automaticamente no repositório.
+
+Após providenciar os certificados, mantenha **`fullchain.pem` e `privkey.pem` fora do Git** no diretório `TLS_CERT_DIR`, protegido por permissões do sistema. A pasta local `infra/certs` está em `.gitignore`. Em `.env` do servidor, defina `API_HOST=nome-real-do-domínio`, `TLS_CERT_DIR`, `PUBLIC_ORIGINS=https://marcianolima.github.io` e as credenciais privadas em variáveis locais. Só então:
+
+```bash
+docker compose --profile gobus-live --profile edge config --quiet
+docker compose --profile edge up -d db api edge
+curl --fail --silent --show-error https://SEU-DOMINIO-API/v1/health
+# Em seguida, após validação da rede/contrato TACOM:
+docker compose --profile gobus-live up -d gobus-live
+# Aceite com dois GETs sanitizados, sem exibir coordenadas:
+PYTHONPATH=pipeline python scripts/check_gobus_deployment.py --api https://SEU-DOMINIO-API
+```
+
+**Importante:** `SEU-DOMINIO-API` é apenas placeholder e deve ser substituído pelo FQDN real, com TLS válido. Não usar certificados autofirmados em produção. O `nginx` será fail-closed sem os certificados; não disponibilizar fallback HTTP para o browser.
+
+No cenário em que muitos usuários compartilham uma única conexão do proxy no backend, **não** confiar indiscriminadamente em cabeçalhos `X-Forwarded-For`. O Nginx sobrescreve `X-Real-IP` com o endereço real do cliente. O FastAPI só interpreta esse cabeçalho quando o IP do container de proxy pertence explicitamente a `TRUSTED_PROXY_CIDRS` configurado pelo operador. Para confirmar o endereço do container consulte `docker inspect` e configure apenas o IP/CIDR controlado, nunca redes arbitrariamente amplas. Alternativamente, aumente `PUBLIC_API_LIMIT_PER_MINUTE` com cautela, mantendo a limitação por IP na borda Nginx.
+
+Para o GitHub Pages consultar a API: configurar a variável de repositório (não segredo) `VITE_PUBLIC_API_BASE=https://SEU-DOMINIO-API` em **Settings → Secrets and variables → Actions → Variables**, executar novamente o workflow de build e verificar as permissões CORS. Credenciais TACOM/administrativas não devem ser cadastradas em variáveis `VITE_`.
+
+O código do coletor mantém tetos **persistentes** conservadores, inicialmente `GOBUS_MAX_PER_HOUR=120` e `GOBUS_MAX_PER_DAY=1000`. Os limites são valores operacionais iniciais, **não representam cotas concedidas pela TACOM**. Negociar com a TACOM a frequência e o número de chamadas adequados. Em caso de limite 429 ou orçamento esgotado, o worker suspende novas consultas.
+
 ## Operação, segurança e limites
 
 - Limitar a **uma instância** do worker TACOM; manter disco e Postgres com backups e acesso restrito.
