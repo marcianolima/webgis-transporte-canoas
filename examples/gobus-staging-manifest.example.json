@@ -1,7 +1,7 @@
 {
-  "_comment": "MODELO. Canoas identificada como codcid=4 na praça MPA pela TACOM em 30/10/2026; os IDs de linha 17 e itinerário 123 são apenas exemplos fictícios, ainda não homologados.",
+  "_comment": "MODELO de staging do serviço MPA. Canoas=codcid 4 foi observado. IDs de linha 17 e itinerário 123 são FICTÍCIOS e precisam ser substituídos; aprovações permanecem false.",
   "municipality_code": "4304606",
-  "city": "CAN",
+  "city": "MPA",
   "authorization_confirmed": false,
   "city_confirmed": false,
   "reference_date": "2026-10-30",
