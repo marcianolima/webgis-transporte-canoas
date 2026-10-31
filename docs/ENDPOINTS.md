@@ -29,6 +29,14 @@ Erros: 401/403/404 não geram repetição; 5xx/timeouts têm backoff. HTTP 200 c
 
 Consultar `ENGENHARIA-REVERSA.md`. Somente contrato de BHZ observado; **nenhum endpoint SIU homologado para Canoas**. JSONP é analisado como dados, nunca executado. O parser admite listas de dicionários em string legada com `ast.literal_eval`, sem `eval` e sem substituir apóstrofos de nomes.
 
+## GoBus/TACOM — contratos confirmados estaticamente no APK 1.29.1.2
+
+A análise do APK confirmou o host configurado `http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/` e caminhos de GET/JSONP para `buscarLinhas`, `cidadesApp`, `V3/buscarItinerario`, `V3/retornaVeiculosMapa`, `V3/buscarParadasPorLinhaComCoordenadas`, `V3/buscarPrevisoes`, `V3/retornaQroLinha` e outros. Contratos e campos: [relatório da análise do APK](APK-GOBUS-1.29.1.2.md).
+
+**Status operacional: pendente.** Descoberta no APK não equivale a resposta do servidor, nem comprova que a base pertence apenas a Canoas. `CAN` é indício presente no layout, mas `siuMobileCidade` deve vir de `cidadesApp`. Não foram recuperados dados municipais de GPS, paradas nem geometria. O adaptador `pipeline/transporte/gobus.py` faz interpretação offline, sem acessar a rede. O utilitário `scripts/gobus_extract.py` recebe arquivo JSONP salvo legitimamente; não publica dados automaticamente.
+
+Geometria de itinerário: `coordX`=longitude, `coordY`=latitude, em ordem; conversão para GeoJSON LineString não certifica vínculo entre os IDs SIU e os códigos NGS do catálogo atual. A telemetria vista pelo cliente não comprova timestamp GPS de origem. O backend operacional e os arquivos PMTiles continuam sujeitos a homologação separada.
+
 ## Backend próprio
 
 | Endpoint | Acesso | Finalidade |
