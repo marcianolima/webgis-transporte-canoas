@@ -4,6 +4,9 @@ COPY requirements.lock /app/requirements.lock
 RUN pip install --no-cache-dir -r requirements.lock && useradd --uid 10001 --create-home transporte
 COPY pipeline /app/pipeline
 COPY backend /app/backend
+COPY public/data/stop-inventory.json /app/public/data/stop-inventory.json
+COPY public/data/route-shapes.geojson /app/public/data/route-shapes.geojson
+COPY public/data/bairros-oficiais.geojson /app/public/data/bairros-oficiais.geojson
 COPY infra/sql /app/infra/sql
 RUN mkdir -p /app/var && chown -R transporte:transporte /app/var
 ENV PYTHONPATH=/app/pipeline:/app PYTHONUNBUFFERED=1
