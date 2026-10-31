@@ -84,13 +84,18 @@ class LiveCollector:
         retries=2, clock: Callable=lambda: datetime.now(timezone.utc),
         monotonic: Callable=time.monotonic, sleep: Callable=time.sleep,
         jitter: Callable=lambda: random.uniform(0, 1),
-        state=None, cache=None
+        state=None, cache=None, max_per_hour=120, max_per_day=1000
     ):
-        if spacing < 15 or max_requests < 1 or max_requests > 60 or not 0 <= retries <= 2:
+        if (spacing < 15 or max_requests < 1 or max_requests > 60 or
+                not 0 <= retries <= 2 or
+                not 1 <= max_per_hour <= 3600 or
+                not max_per_hour <= max_per_day <= 50000):
             raise ValueError("Limites de frequência/orçamento inválidos")
         self.client = client
         self.spacing = float(spacing)
         self.maximum = int(max_requests)
+        self.max_per_hour = int(max_per_hour)
+        self.max_per_day = int(max_per_day)
         self.retries = retries
         self.clock = clock
         self.monotonic = monotonic
@@ -99,11 +104,15 @@ class LiveCollector:
         self.state = dict(state or {})
         self.state.setdefault("cursor", 0)
         self.state.setdefault("positions", {})
+        self.state.setdefault("requests_utc", [])
+        self.state.setdefault("cycle", 0)
         self.cache = cache if cache is not None else {}
         self.requests = 0
         self.cache_hits = 0
         self.last = None
         self.denied = False
+        self.exhausted = False
+        self.throttled = False
 
     def get(self, kind, **params):
         if kind not in ("previsoes", "veiculos"):
@@ -120,11 +129,28 @@ class LiveCollector:
             raise ValueError("Acesso suspenso por erro de autorização")
         for attempt in range(self.retries + 1):
             if self.requests >= self.maximum:
-                raise ValueError("Orçamento de chamadas ao fornecedor esgotado")
+                self.exhausted = True
+                raise ValueError("Orçamento do ciclo TACOM esgotado")
+            # Orçamento acumulado persistido entre rodadas/reinicializações.
+            # Tentativas de retry também são contabilizadas.
+            seen = []
+            for item in self.state["requests_utc"]:
+                try:
+                    at = datetime.fromisoformat(item)
+                    if at.tzinfo and 0 <= (self.clock() - at).total_seconds() < 86400:
+                        seen.append(item)
+                except (TypeError,ValueError):
+                    continue
+            self.state["requests_utc"] = seen
+            hour = sum((self.clock() - datetime.fromisoformat(x)).total_seconds() < 3600 for x in seen)
+            if hour >= self.max_per_hour or len(seen) >= self.max_per_day:
+                self.exhausted = True
+                raise ValueError("Orçamento TACOM acumulado esgotado")
             if self.last is not None:
                 self.sleep(max(0, self.spacing - (self.monotonic() - self.last)) + self.jitter())
             self.last = self.monotonic()
             self.requests += 1
+            self.state['requests_utc'].append(iso(self.clock()))
             try:
                 callback = path.rsplit("/", 1)[-1]
                 response = self.client.get(
@@ -134,6 +160,8 @@ class LiveCollector:
                     follow_redirects=False,
                     timeout=45,
                 )
+                if response.status_code == 429:
+                    self.throttled = True
                 if response.status_code in (401, 403):
                     self.denied = True
                     raise ValueError("Acesso TACOM negado; consultas suspensas")
@@ -174,11 +202,13 @@ class LiveCollector:
         area = MunicipalReferenceArea(neighborhoods)
         ids = selected_stops(inventory, valid_routes, self.state["cursor"], stop_queries)
         self.state["cursor"] += 1
+        self.state["cycle"] += 1
+        cycle = self.state["cycle"]
         active = defaultdict(set)
         failures = []
         # O par (itinerário, veículo) é observado em previsão, nunca adivinhado.
         for stop_id in ids:
-            if self.requests >= self.maximum or self.denied:
+            if self.requests >= self.maximum or self.denied or self.exhausted or self.throttled:
                 break
             try:
                 raw, _ = self.get("previsoes", parada=stop_id, acessivel="false", cidade="MPA")
@@ -219,7 +249,12 @@ class LiveCollector:
                         continue
                     fetched_ids.add(key)
                     previous = self.state["positions"].get(key, {})
-                    unchanged = (previous.get("longitude") == lon and previous.get("latitude") == lat)
+                    unchanged = (
+                        previous.get("last_seen_cycle") == cycle - 1 and
+                        previous.get("itinerary_id") == itinerary_id and
+                        previous.get("longitude") == lon and
+                        previous.get("latitude") == lat
+                    )
                     stale = min(9999, int(previous.get("stale_polls") or 0) + 1) if unchanged else 0
                     positions.append({
                         "source_id": SOURCE_ID, "vehicle_id": vehicle_id,
@@ -235,7 +270,8 @@ class LiveCollector:
                     })
                     self.state["positions"][key] = {
                         "longitude": lon, "latitude": lat, "stale_polls": stale,
-                        "fetched_at": fetched_at
+                        "fetched_at": fetched_at, "last_seen_cycle": cycle,
+                        "itinerary_id": itinerary_id
                     }
             except (ValueError, httpx.HTTPError):
                 failures.append("veiculos")
@@ -257,7 +293,13 @@ class LiveCollector:
                 "active_itineraries": len(active),
                 "queried_itineraries": min(len(active), itinerary_queries),
                 "requests": self.requests, "cache_hits": self.cache_hits,
-                "failures": len(failures), "access_denied": self.denied
+                "failures": len(failures), "access_denied": self.denied,
+                "rate_limited": self.throttled, "quota_exhausted": self.exhausted,
+                "requests_last_hour": sum(
+                    0 <= (self.clock() - datetime.fromisoformat(x)).total_seconds() < 3600
+                    for x in self.state["requests_utc"]
+                ),
+                "requests_last_day": len(self.state["requests_utc"])
             }
         }
 
@@ -279,6 +321,8 @@ def main():
     cli.add_argument("--interval", type=float, default=15, help="Mínimo entre GET (>=15 s)")
     cli.add_argument("--cycle-interval", type=int, default=180)
     cli.add_argument("--max-requests", type=int, default=16)
+    cli.add_argument("--max-per-hour", type=int, default=120)
+    cli.add_argument("--max-per-day", type=int, default=1000)
     cli.add_argument("--stop-queries", type=int, default=8)
     cli.add_argument("--itinerary-queries", type=int, default=6)
     cli.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
@@ -301,7 +345,9 @@ def main():
     with httpx.Client(follow_redirects=False, trust_env=False) as client:
         while True:
             collector = LiveCollector(client, cache=cache, spacing=args.interval,
-                                      max_requests=args.max_requests, state=previous)
+                                      max_requests=args.max_requests, state=previous,
+                                      max_per_hour=args.max_per_hour,
+                                      max_per_day=args.max_per_day)
             report = collector.once(inventory, shapes, neighborhoods,
                                     stop_queries=args.stop_queries,
                                     itinerary_queries=args.itinerary_queries)
