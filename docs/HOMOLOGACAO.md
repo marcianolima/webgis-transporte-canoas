@@ -1,4 +1,9 @@
-# Relatório técnico — revisões de 30/10/2026
+# Relatório técnico — revisões de 30–31/10/2026
+
+## Revisão 0.3.0
+
+52 itinerários reais de 35 linhas e 215 paradas TACOM em PMTiles, como referência não homologada operacionalmente. 111 testes Python e 25 TypeScript/React; lint e build locais aprovados. Diagnóstico, correção da amostra de Viamão, métricas, qualidade e limites em [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). A comprovação do deploy corresponde ao run associado ao commit final; registros a seguir são históricos das revisões anteriores.
+
 
 ## Revisão 0.2.0: mapa PMTiles e seleção de linhas
 

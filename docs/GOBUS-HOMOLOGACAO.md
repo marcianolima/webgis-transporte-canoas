@@ -1,6 +1,9 @@
 # Integração autorizada GoBus/TACOM — homologação
 
-Situação: engenharia reversa estática do APK 1.29.1.2 concluída; os contratos de leitura estão mapeados. **Cadastro de linhas consultado e município Canoas identificado; geometrias, GPS e ETA ainda não homologados para publicação.** Não se devem confundir IDs do SIU Mobile com os IDs de linha do NGS/Sogal.
+**Atualização 31/10/2026 / 0.3.0:** geometrias de referência publicadas: 52 itinerários de 35 linhas e 215 paradas. O serviço de coordenadas por linha devolveu Viamão no acesso testado e foi excluído; o novo fluxo usa listas de IDs, consultas de parada individual/proximidade e itinerários observados em previsões municipais. Ver [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). As seções seguintes preservam o diagnóstico anterior; dados agora publicados continuam sem homologação operacional.
+
+
+Situação: engenharia reversa estática do APK 1.29.1.2 concluída; os contratos de leitura estão mapeados. **Cadastro de linhas e cartografia de referência disponíveis; GPS e ETA continuam sem homologação para publicação operacional.** Não se devem confundir IDs do SIU Mobile com os IDs de linha do NGS/Sogal.
 
 ## Componentes entregues
 

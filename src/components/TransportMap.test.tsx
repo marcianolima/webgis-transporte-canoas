@@ -13,6 +13,7 @@ const fixture = {
     routes: [{ id: "SYNTHETIC", code: "TEST", name: "SYNTHETIC fixture" }],
   },
   territory: { neighborhoods: [] },
+  stops: { type: "FeatureCollection", features: [] },
   routeShapes: { type: "FeatureCollection", features: [] },
 } as unknown as AppData;
 afterEach(cleanup);

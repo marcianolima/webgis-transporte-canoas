@@ -92,3 +92,7 @@ As execuções estáticas e do worker registram `running` antes da consulta remo
 ## Arquivo cartográfico e trajetos
 
 O workflow regenera PMTiles antes da validação. A publicação inclui o arquivo binário e `map-manifest.json`; não excluir o binário como se fosse cache. Para importar percursos municipais reais, conferir [MAPA-PMTILES.md](MAPA-PMTILES.md). Conservar `var/shape-history/` em armazenamento persistente com backup. Após alterações cartográficas manuais, regenerar o PMTiles e validar os hashes antes do build.
+
+## Cartografia TACOM 0.3.0
+
+Consultar [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). O workflow tem opção manual `refresh_geography`, desligada por padrão. Corpos TACOM ficam somente no diretório privado e não são incluídos no cache público do Actions. O agendamento diário continua para programação NGS. A coleta cartográfica usa previsões apenas para descobrir IDs de itinerário; não cria coleta contínua de GPS.

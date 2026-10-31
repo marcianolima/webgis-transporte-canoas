@@ -4,7 +4,13 @@ from datetime import datetime,timezone
 from pathlib import Path
 root=Path(__file__).resolve().parents[1];out=root/'public/data';now=datetime.now(timezone.utc).isoformat()
 def item(id,name,status,description,url,features):return dict(id=id,name=name,status=status,description=description,url=url,features=features,checked_at=now)
+geography=json.loads((out/'transport-geography.json').read_text()) if (out/'transport-geography.json').exists() else {}
+published_shapes=json.loads((out/'route-shapes.geojson').read_text()).get('features',[]) if (out/'route-shapes.geojson').exists() else []
+published_stops=json.loads((out/'stops.geojson').read_text()).get('features',[]) if (out/'stops.geojson').exists() else []
+tacom_shapes=[f for f in published_shapes if f.get('properties',{}).get('source')=='TACOM-GoBus']
+geography.update({'published_itineraries':len(tacom_shapes),'routes_with_geometry':len({f['properties']['route_id'] for f in tacom_shapes}),'published_stops':sum(f.get('properties',{}).get('source')=='TACOM-GoBus' for f in published_stops)})
 integrations=[
+ item('tacom-geography','TACOM / SIU · cartografia de referência','partial' if geography.get('published_itineraries') else 'pending',str(geography.get('published_itineraries',0))+' itinerários de '+str(geography.get('routes_with_geometry',0))+' linhas e '+str(geography.get('published_stops',0))+' paradas. Amostra real da API, sem homologação de vigência ou equivalência à programação.','https://github.com/marcianolima/webgis-transporte-canoas/blob/main/docs/EVOLUCAO-0.3.md',['IDs de itinerário observados em previsões de paradas municipais','Coordenadas cruzadas por ID e validadas com os bairros','Sem GPS contínuo; dados estáticos de referência']),
  item('pmtiles','Cartografia local · PMTiles','available','Arquivo vetorial local com bairros e setores reais. Linhas são incluídas apenas quando há geometria com proveniência.','https://github.com/marcianolima/webgis-transporte-canoas/blob/main/docs/MAPA-PMTILES.md',['18 bairros e 659 setores','Modo compatível sem WebGL','GeoJSON local como alternativa automática']),
  item('ngs','Sogal / NGS · programação','available','Endpoints públicos vinculados no portal da operadora; cadastro, datas, saídas e logradouros.','https://ngsservicos.com/sogal/horarios/',['Consulta por data exata','Horários e sentidos publicados','Sem comprovação de operação real']),
  item('bairros','Bairros oficiais · GeoCanoas','available','18 bairros reutilizados da base municipal já integrada ao WebGIS Empreender.','https://geo.canoas.rs.gov.br/server/rest/services/BAIRROSOFICIAL/FeatureServer',['Geometrias locais em EPSG:4326','Área calculada em EPSG:31982','Origem municipal; serviço não revalidado nesta sessão']),
@@ -27,10 +33,10 @@ previous=json.loads((out/'catalogue.json').read_text()) if (out/'catalogue.json'
 checked={x['id']:x['checked_at'] for x in previous.get('integrations',[])}
 network=json.loads((out/'network.json').read_text()) if (out/'network.json').exists() else {}
 for integration in integrations:
-    integration['checked_at']=network.get('generated_at',now) if integration['id']=='ngs' else checked.get(integration['id'],now)
+    integration['checked_at']=network.get('generated_at',now) if integration['id']=='ngs' else geography.get('generated_at',now) if integration['id']=='tacom-geography' else checked.get(integration['id'],now)
     if integration['id']=='ngs' and network.get('status')=='partial':integration['status']='partial'
 (out/'catalogue.json').write_text(json.dumps({'generated_at':now,'integrations':integrations,'methodologies':methods},ensure_ascii=False,separators=(',',':')))
-(out/'vehicles.json').write_text(json.dumps({'status':'unavailable','generated_at':None,'vehicles':[],'message':'Serviço GPS de Canoas aguardando validação do APK e da API operacional.'},ensure_ascii=False))
+(out/'vehicles.json').write_text(json.dumps({'status':'unavailable','generated_at':None,'vehicles':[],'message':'Serviço GPS de Canoas aguardando timestamp de origem, contrato e infraestrutura operacional homologados.'},ensure_ascii=False))
 assets=[]
 for name,origin in [('bairros-oficiais.geojson','GeoCanoas / BAIRROSOFICIAL'),('censo2022-setores.geojson','IBGE / WebGIS Empreender Canoas')]:
  path=out/name

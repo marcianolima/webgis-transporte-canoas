@@ -81,6 +81,8 @@ export interface Territory {
     stops: number | null;
     stops_per_km2: number | null;
     covered_area_pct: number | null;
+    reference_route_count?: number;
+    reference_route_km?: number | null;
   }[];
   stops_status: string;
   stops_source: string | null;

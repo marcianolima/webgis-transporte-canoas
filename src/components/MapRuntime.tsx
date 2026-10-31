@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+import type { Feature } from "geojson";
 import "leaflet/dist/leaflet.css";
 import { currentVehicles, number, brDate } from "../data";
 import {
@@ -7,14 +8,17 @@ import {
   findArea,
   selectedShapes,
   routeColor,
+  selectedStops,
 } from "../map-data";
 import { LocalVectorLayer, mapArchive, type TileStyle } from "../pmtiles";
+import { stopPopup } from "../map-popups";
 import type { AppData } from "../types";
 export type MapState = "loading" | "ready" | "fallback" | "error";
 export interface RuntimeProps {
   data: AppData;
   style: TileStyle;
   neighborhood: string;
+  focusedStopId?: string;
   command: { type: string; id: number };
   onState: (state: MapState, message: string) => void;
   onArea: (name: string) => void;
@@ -24,6 +28,7 @@ export default function MapRuntime(props: RuntimeProps) {
     map = useRef<L.Map | null>(null),
     tiles = useRef<LocalVectorLayer | null>(null),
     selection = useRef<L.GeoJSON | null>(null),
+    stopLayer = useRef<L.GeoJSON | null>(null),
     highlight = useRef<L.GeoJSON | null>(null),
     legacy = useRef<L.LayerGroup | null>(null),
     state = useRef(props);
@@ -66,11 +71,36 @@ export default function MapRuntime(props: RuntimeProps) {
           ) +
           " · conferir vigência";
         node.append(title, p);
+        const detail = document.createElement("p");
+        detail.textContent =
+          "Itinerário " +
+          String(
+            f.properties?.itinerary_id ||
+              f.properties?.shape_id ||
+              "não informado",
+          ) +
+          " · consulta " +
+          brDate(f.properties?.fetched_at, true) +
+          (f.properties?.territorial_quality === "border_review"
+            ? " · trecho na borda da base de bairros: revisar delimitação."
+            : "");
+        node.append(detail);
         l.bindPopup(node);
       },
     }).addTo(m);
     highlight.current = L.geoJSON(undefined, {
       style: { color: "#e78c34", weight: 3, fillOpacity: 0 },
+    }).addTo(m);
+    stopLayer.current = L.geoJSON(undefined, {
+      pointToLayer: (_feature, latlng) =>
+        L.circleMarker(latlng, {
+          radius: 4.5,
+          color: "#fff",
+          weight: 1.3,
+          fillColor: "#9f6a18",
+          fillOpacity: 0.95,
+        }),
+      onEachFeature: (f, l) => l.bindPopup(stopPopup(f)),
     }).addTo(m);
     legacy.current = L.layerGroup();
     const paintLegacy = () => {
@@ -208,6 +238,7 @@ export default function MapRuntime(props: RuntimeProps) {
       tiles.current = null;
       selection.current = null;
       highlight.current = null;
+      stopLayer.current = null;
       legacy.current = null;
     };
   }, [
@@ -227,13 +258,38 @@ export default function MapRuntime(props: RuntimeProps) {
       layer.clearLayers();
       layer.addData(selectedShapes(props.data, props.style.routeIds));
       layer.bringToFront();
+      stopLayer.current?.clearLayers();
+      if (props.style.showStops !== false)
+        stopLayer.current?.addData(
+          selectedStops(props.data, props.style.routeIds),
+        );
+      stopLayer.current?.bringToFront();
       if (layer.getBounds().isValid())
         map.current?.fitBounds(layer.getBounds(), {
           padding: [35, 35],
           maxZoom: 15,
         });
+      else if (
+        props.style.routeIds.length &&
+        stopLayer.current?.getBounds().isValid()
+      )
+        map.current?.fitBounds(stopLayer.current.getBounds(), {
+          padding: [35, 35],
+          maxZoom: 15,
+        });
     }
-  }, [styleKey, props.data.routeShapes]);
+  }, [styleKey, props.data.routeShapes, props.data.stops]);
+  useEffect(() => {
+    if (!props.focusedStopId) return;
+    stopLayer.current?.eachLayer((layer) => {
+      const f = (layer as L.Layer & { feature?: Feature }).feature;
+      if (String(f?.properties?.stop_id) === props.focusedStopId) {
+        const marker = layer as L.CircleMarker;
+        map.current?.setView(marker.getLatLng(), 16);
+        marker.openPopup();
+      }
+    });
+  }, [props.focusedStopId, props.data.stops, styleKey]);
   useEffect(() => {
     highlight.current?.clearLayers();
     if (props.neighborhood) {
@@ -256,7 +312,10 @@ export default function MapRuntime(props: RuntimeProps) {
       if (b.isValid()) m.fitBounds(b, { padding: [22, 22] });
     }
     if (props.command.type === "route") {
-      const b = selection.current?.getBounds();
+      const selectedBounds = selection.current?.getBounds();
+      const b = selectedBounds?.isValid()
+        ? selectedBounds
+        : stopLayer.current?.getBounds();
       if (b?.isValid()) m.fitBounds(b, { padding: [35, 35], maxZoom: 15 });
     }
     if (props.command.type === "locate") {

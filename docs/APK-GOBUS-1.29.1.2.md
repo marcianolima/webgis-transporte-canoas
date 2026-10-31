@@ -1,5 +1,8 @@
 # Engenharia reversa estática — APK Canoas GoBus 1.29.1.2
 
+**Atualização 31/10/2026:** a amostra anterior de 64 paradas do endpoint geográfico por linha foi reavaliada e identificada em Viamão, não em Canoas. O novo fluxo recuperou 52 itinerários de 35 linhas e 215 paradas de referência usando relações verificadas por IDs. Consulte [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md) para o diagnóstico atual.
+
+
 Análise realizada em 30/10/2026 do arquivo fornecido pelo operador da conversa, **sem executar o APK, efetuar login, interceptar tráfego ou consultar endpoints de escrita**.
 
 ## Evidência e escopo

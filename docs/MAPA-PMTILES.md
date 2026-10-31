@@ -1,4 +1,8 @@
-# Mapa, PMTiles e importação de trajetos — 0.2.0
+# Mapa, PMTiles e importação de trajetos
+
+**Atualização 0.3.0:** arquivo com 52 itinerários de 35 linhas e 215 paradas de referência TACOM, 28 tiles, 479.399 bytes. Coleta, vínculos, revisão territorial e limitações em [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). O diagnóstico 0/81 abaixo pertence à revisão anterior.
+
+## Revisão 0.2.0
 
 ## Correção e limites
 

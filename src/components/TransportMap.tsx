@@ -17,7 +17,7 @@ import {
   MapPin,
 } from "lucide-react";
 import type { AppData } from "../types";
-import { routeColor, selectedShapes } from "../map-data";
+import { routeColor, selectedShapes, selectedStops } from "../map-data";
 import type { MapState } from "./MapRuntime";
 const MapRuntime = lazy(() => import("./MapRuntime"));
 const MapLibreRuntime = lazy(() => import("./MapLibreRuntime"));
@@ -50,12 +50,14 @@ export default function TransportMap({
   compact = false,
   selectedNeighborhood = "",
   onNeighborhood,
+  focusedStopId,
 }: {
   data: AppData;
   territorial?: boolean;
   selectedRouteIds?: string[];
   compact?: boolean;
   selectedNeighborhood?: string;
+  focusedStopId?: string;
   onNeighborhood?: (name: string) => void;
 }) {
   const [engine, setEngine] = useState("compatible"),
@@ -67,6 +69,7 @@ export default function TransportMap({
     [status, setStatus] = useState<MapState>("loading"),
     [message, setMessage] = useState("Carregando mapa local…"),
     [command, setCommand] = useState({ type: "", id: 0 });
+  const [showStops, setShowStops] = useState(true);
   const ids = selectedRouteIds ?? localIds;
   const key = ids.join("|");
   const selected = useMemo(
@@ -114,8 +117,9 @@ export default function TransportMap({
   );
   const runtimeProps = {
     data,
-    style: { theme, routeIds: ids, territorial },
+    style: { theme, routeIds: ids, territorial, showStops },
     neighborhood,
+    focusedStopId,
     command,
     onState: stateChanged,
     onArea: areaChanged,
@@ -166,6 +170,17 @@ export default function TransportMap({
           </select>
         </label>
       </div>
+      <div className="map-layer-status">
+        <label>
+          <input
+            type="checkbox"
+            checked={showStops}
+            onChange={(e) => setShowStops(e.target.checked)}
+          />{" "}
+          Mostrar paradas de referência ({data.stops.features.length})
+        </label>
+        <span>{available} linhas com percurso · dados parciais da API</span>
+      </div>
       <div
         className={
           "transport-map-layout " +
@@ -192,7 +207,10 @@ export default function TransportMap({
             </button>
             <button
               onClick={() => run("route")}
-              disabled={!selected.features.length}
+              disabled={
+                !selected.features.length &&
+                (!ids.length || !selectedStops(data, ids).features.length)
+              }
               aria-label="Enquadrar linhas selecionadas"
             >
               <Navigation size={18} />
@@ -222,7 +240,7 @@ export default function TransportMap({
             <span>
               Contorno: união dos bairros; não é limite municipal homologado.
             </span>
-            {ids.map((id) => (
+            {ids.slice(0, 5).map((id) => (
               <span key={id} className="legend-route">
                 <i style={{ background: routeColor(id) }} />
                 {id.replace(/^0+/, "")} ·{" "}
@@ -231,6 +249,9 @@ export default function TransportMap({
                   : "percurso de referência"}
               </span>
             ))}
+            {ids.length > 5 && (
+              <span>+ {ids.length - 5} linhas selecionadas</span>
+            )}
           </div>
           <div
             className={"map-load-state " + status}
@@ -309,8 +330,8 @@ export default function TransportMap({
             ? "A linha selecionada ainda não tem"
             : "As linhas selecionadas ainda não têm"}{" "}
           geometria disponível nesta base. Os horários e logradouros podem ser
-          consultados; nenhum trajeto aproximado foi desenhado. A importação de
-          GeoJSON/GTFS gera automaticamente a camada de linhas e o PMTiles.
+          consultados; nenhum trajeto aproximado foi desenhado. Consulte também
+          os horários e logradouros na página de linhas.
         </p>
       )}
       <p className="caption">

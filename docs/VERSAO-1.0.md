@@ -1,36 +1,23 @@
-# Caminho verificável para a versão 1.0
+# Caminho verificável para a versão 1.0 — 31/10/2026
 
-A versão publicada nesta revisão é **0.2.0**, com programação e território reais, mapa PMTiles e importador de percursos. A existência de telas, algoritmos e infraestrutura no código não encerra a homologação de integrações ou operação municipal.
+A versão 0.3.0 publica **52 itinerários de 35 linhas e 215 paradas TACOM**, com origem, hashes e datas, além de programação real NGS e território. São referências da API; não homologam vigência, equivalência aos horários ou operação atual. Consulte [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md).
 
-| Critério | Estado em 0.2.0 | Evidência / condição para encerramento |
+| Critério | Estado atual | Dependência para encerramento |
 | --- | --- | --- |
-| Repositório e documentação | Implementados | Código, instruções, contratos, modelo, testes e metodologia versionados |
-| Frontend público | Pipeline de Pages existente; verificar o run desta revisão | Build, deploy e carregamento público precisam concluir com sucesso a cada release |
-| Desktop/mobile | Verificados no navegador de QA | Viewport móvel interno 390×844; falta validar aparelhos e navegadores usados em campo |
-| Mapa funcional | PMTiles local + modo compatível + fallback GeoJSON | 18 bairros, 659 setores; sem dependência de chave ou servidor de desenvolvimento |
-| Cartografia oficial | Base de bairros integrada de projeto anterior | Revalidar publicação original; obter limite municipal oficial, hoje união derivada de bairros |
-| Linhas/horários | 81 IDs e 4.990 saídas em cinco datas no snapshot de 30/10/2026 | Coleta NGS real; assegurar autorização/estabilidade operacional e conferir alterações |
-| Trajetos | Desenho, filtros e importador implementados; 0 linhas com geometria real | Obter GeoJSON/GTFS municipal com códigos, sentidos, variantes, origem e vigência; homologar |
-| Paradas | Acesso TACOM confirmado; 64 paradas geográficas em amostra de uma linha, sem publicação | Validar cadastro completo, duplicações, origem, licença e sentido; aprovar importação e regenerar PMTiles |
-| GoBus/TACOM | APK analisado e serviços reais de catálogo/paradas/previsões testados; `MPA/codcid=4` confirmado | 204 registros de linha de Canoas, 72 códigos candidatos NGS; falta revisar crosswalk, sentidos, itinerários, licença de uso e GPS. Ver [relatório](GOBUS-HOMOLOGACAO.md) |
-| GPS/ETA | Não homologados | Veículo, linha, sentido, timestamp de origem, atualização autorizada; validar ETA contra observações |
-| Histórico estático | SQLite implementado | Disco persistente e backup para continuidade; cache do Actions é apenas auxiliar |
-| Histórico GPS e backend | Código e infraestrutura preparados | Implantar Postgres/PostGIS, API, worker, TLS, monitoramento e restaurar backup em teste |
-| Gestão restrita | Chave técnica e painel privado testados localmente | Autenticação municipal nominal, perfis, trilha administrativa e homologação do ambiente |
-| Indicadores de programação | Calculados com dados reais | Conferir quadro por data/sentido; não representam viagens realizadas |
-| Regularidade e pontualidade observadas | Pendentes de dados | Extrair passagens e associar viagens; definir cobertura/amostragem mínima e tolerâncias com o município |
-| Auditoria geográfica | Regras unitárias testadas; sem ocorrências operacionais inventadas | Shapes temporais autorizados, GPS confiável, desvios temporários e revisão humana das evidências |
-| Relatórios | CSV/JSON e impressão/PDF do navegador disponíveis | Homologar impressão/download nos dispositivos; relatórios fiscais dependem dos dados reais |
-| Análise territorial | Bairros, setores, população e métricas de área | Paradas/linhas para cobertura; rede de pedestres e equipamentos para acessibilidade |
-| Qualidade e recuperação | Validações, logs, backoff e fallback implementados | Exercitar falhas da fonte real e procedimentos na infraestrutura de produção |
-| Acessibilidade e aceite | Sem auditoria WCAG integral / sem aceite municipal | Teste com teclado, leitor de tela, contraste e usuários; homologação formal |
+| Repositório, CI/CD e documentação | Implementados; workflow e testes presentes | Conferir o run/deploy de cada revisão |
+| Frontend e mapa | PMTiles local, filtros, modo compatível e fallback GeoJSON | Testes em aparelhos e navegadores usados em campo |
+| Cartografia territorial | 18 bairros e 659 setores locais | Revalidar fonte original; obter limite municipal homologado |
+| Linhas e horários | 81 IDs, 4.990 saídas, cinco datas no snapshot de 30/10/2026 | Acompanhar alterações, calendários e programação oficial |
+| Trajetos | 52 itinerários de 35 linhas, todos de referência; sete sob revisão de borda | Completar sentidos/variantes, vigência e vínculos; não inferir remoção de ausência em amostra |
+| Paradas | 215 coordenadas e vínculos por IDs de listas municipais; cobertura parcial | Completar os 1.266 IDs consultados e demais linhas; homologar sequência/atendimento |
+| Engenharia reversa | APK e contratos mapeados; problema do serviço de coordenadas por linha isolado | Acordar contrato estável e canal seguro de produção com fornecedor |
+| GPS e ETA público | Não publicados como monitoramento atual | Timestamp de medição embarcada, limites, adaptador real e infraestrutura persistente |
+| Histórico e backend | Código, SQLite e modelo PostgreSQL/PostGIS preparados | Hospedagem, TLS, backups e recuperação testada em produção |
+| Gestão restrita | Painel privado com chave técnica | Autenticação nominal municipal, perfis e homologação de acesso |
+| Indicadores de programação | Calculados com dados reais | Conferência por data/sentido; não representam viagens realizadas |
+| Auditoria operacional | Regras unitárias testadas, sem ocorrências inventadas | GPS temporal confiável, associação de viagens, critérios contratuais e revisão humana |
+| Análise territorial | Área, população, paradas, buffers e extensão da amostra | Cobertura completa, equipamentos e rede de pedestres para acessibilidade |
+| Relatórios | CSV/JSON/GeoJSON e impressão do navegador | Homologar dispositivos e relatórios fiscais com evidências reais |
+| Acessibilidade e aceite | QA desktop e viewport móvel; sem auditoria WCAG integral | Teclado, leitor de tela, contraste, usuários de campo e aceite municipal |
 
-## Prioridade de execução
-
-1. Solicitar ao responsável pela operação os percursos e paradas municipais com identificadores, sentidos e datas de vigência. O importador permite conferir e publicar geometria sem depender de concluir a análise do APK.
-2. **Catálogo municipal GoBus recuperado:** `cidadesApp` retornou vazio, mas `V3/cidadesLinhas/MPA` comprovou Canoas=`codcid4`. Revisar 72 vínculos candidatos SIU↔NGS; identificar associação oficial entre linha, sublinha, sentido e `codItinerario`. Na amostra `05006`, 64 paradas com coordenadas foram verificadas, e 37 previsões em cinco paradas não produziram um itinerário associado verificável.
-3. Homologar uma amostra real de GPS: timestamps, coordenadas, identificação, atraso, periodicidade e limites. Só então configurar e executar o worker contínuo.
-4. Implantar backend persistente, autenticação nominal e backups. Reprocessar histórico com versões de trajetos e algoritmos identificadas.
-5. Homologar indicadores com documentos e evidências operacionais, testar em campo e registrar aceite. Não inferir cancelamento ou infração da ausência de GPS.
-
-Nenhum desses acessos foi contornado. O desenvolvimento independente avançou com mapa, importadores, validações, documentação e testes; dados operacionais ausentes continuam identificados como pendentes.
+Prioridades seguintes: ampliar coordenadas de paradas e variantes com capturas limitadas; conciliar códigos/sentidos/vigência com o fornecedor; confirmar timestamp e contrato GPS; implantar backend; homologar indicadores com a fiscalização. Nenhuma ausência de GPS ou de previsão comprova cancelamento, viagem não realizada ou infração.

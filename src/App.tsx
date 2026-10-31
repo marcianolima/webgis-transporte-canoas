@@ -43,6 +43,7 @@ import {
 } from "./data";
 import type { AppData, Departure, Vehicles } from "./types";
 const TransportMap = lazy(() => import("./components/TransportMap"));
+const StopsPage = lazy(() => import("./components/StopsPage"));
 const Chart = lazy(() => import("./components/Chart"));
 const github = "https://github.com/marcianolima/webgis-transporte-canoas";
 const pages = [
@@ -451,7 +452,7 @@ function App() {
           <a href={github} target="_blank" rel="noreferrer">
             Código e documentação <ArrowUpRight size={13} />
           </a>
-          <small>v0.2 · integração em homologação</small>
+          <small>v0.3 · dados de referência</small>
         </div>
       </aside>
       <div className="workspace">
@@ -756,9 +757,11 @@ function App() {
                   <div className="notice">
                     <MapPin size={18} />
                     <div>
-                      Base territorial disponível. Trajetos geográficos das
-                      linhas e associação entre linhas e paradas aguardam uma
-                      fonte homologada. O itinerário textual está em{" "}
+                      {number(data.mapManifest?.route_geometry_count ?? 0)}{" "}
+                      linhas com percursos reais de referência e{" "}
+                      {number(data.stops.features.length)} paradas publicadas. A
+                      amostra TACOM é parcial; variantes, sentidos e vigência
+                      operacional estão em conferência. Consulte também{" "}
                       <a href="#linhas">Linhas e itinerários</a>.
                     </div>
                   </div>
@@ -887,6 +890,41 @@ function App() {
                             selectedRouteIds={[selected.id]}
                             compact
                           />
+                          <p className="caption">
+                            {data.routeShapes?.features.filter(
+                              (f) =>
+                                String(f.properties?.route_id) === selected.id,
+                            ).length ?? 0}{" "}
+                            itinerários encontrados na API. O sentido e a
+                            vigência não são informados pela fonte; não
+                            representam a totalidade das variantes autorizadas.
+                          </p>
+                          <div className="export-actions">
+                            <button
+                              disabled={
+                                !data.routeShapes?.features.some(
+                                  (f) =>
+                                    String(f.properties?.route_id) ===
+                                    selected.id,
+                                )
+                              }
+                              onClick={() =>
+                                download(
+                                  "linha-" + selected.code + ".geojson",
+                                  JSON.stringify({
+                                    type: "FeatureCollection",
+                                    features: data.routeShapes?.features.filter(
+                                      (f) =>
+                                        String(f.properties?.route_id) ===
+                                        selected.id,
+                                    ),
+                                  }),
+                                )
+                              }
+                            >
+                              Baixar percurso GeoJSON
+                            </button>
+                          </div>
                         </Panel>
                         <Panel
                           title="Itinerário em logradouros"
@@ -931,86 +969,9 @@ function App() {
                 </div>
               )}
               {page === "paradas" && (
-                <>
-                  <div className="notice warning">
-                    <TriangleAlert size={18} />
-                    <span>
-                      {data.stops.features.length
-                        ? "Paradas do OpenStreetMap são referências colaborativas. Sua vinculação à rede municipal e situação de atendimento não estão homologadas."
-                        : "Cadastro geográfico de paradas municipais ainda não homologado. A ausência de pontos não significa ausência de atendimento."}
-                    </span>
-                  </div>
-                  <MapBox data={data} />
-                  {data.stops.features.length ? (
-                    <Panel
-                      title="Pontos disponíveis"
-                      subtitle="OpenStreetMap · dados colaborativos"
-                    >
-                      <div className="search">
-                        <Search size={17} />
-                        <input
-                          aria-label="Buscar ponto"
-                          value={query}
-                          onChange={(e) => setQuery(e.target.value)}
-                          placeholder="Nome ou identificador"
-                        />
-                      </div>
-                      <div className="table-scroll">
-                        <table>
-                          <thead>
-                            <tr>
-                              <th>Identificador OSM</th>
-                              <th>Nome informado</th>
-                              <th>Bairro</th>
-                              <th>Fonte</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {data.stops.features
-                              .filter((f) =>
-                                JSON.stringify(f.properties)
-                                  .toLowerCase()
-                                  .includes(query.toLowerCase()),
-                              )
-                              .map((f) => (
-                                <tr key={String(f.id)}>
-                                  <td>
-                                    <a
-                                      href={
-                                        "https://www.openstreetmap.org/node/" +
-                                        f.id
-                                      }
-                                      target="_blank"
-                                      rel="noreferrer"
-                                    >
-                                      {String(f.id)}
-                                    </a>
-                                  </td>
-                                  <td>
-                                    {f.properties?.name ||
-                                      "Sem nome cadastrado"}
-                                  </td>
-                                  <td>
-                                    {f.properties?.neighborhood ||
-                                      "Não identificado"}
-                                  </td>
-                                  <td>OSM</td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </Panel>
-                  ) : (
-                    <Panel title="Cadastro de pontos">
-                      <Empty title="Fonte de paradas pendente" icon={MapPin}>
-                        As consultas de linhas atendidas, sequências e previsões
-                        serão habilitadas com dados validados. Veja o
-                        diagnóstico em Dados e metodologia.
-                      </Empty>
-                    </Panel>
-                  )}
-                </>
+                <Suspense fallback={<p>Carregando consulta de paradas…</p>}>
+                  <StopsPage data={data} />
+                </Suspense>
               )}
               {page === "monitoramento" && (
                 <>
@@ -1334,7 +1295,7 @@ function App() {
                   <div className="notice">
                     <Globe2 size={18} />
                     <span>
-                      Proximidade espacial não comprova atendimento. A cobertura
+                      Amostra parcial: densidade e cobertura representam somente os pontos publicados. Proximidade espacial não comprova atendimento. A cobertura
                       depende de um cadastro de paradas atualizado e da oferta
                       operacional.
                     </span>
@@ -1369,7 +1330,7 @@ function App() {
                       icon={Target}
                     />
                   </div>
-                  <MapBox data={data} territorial compact />
+                  <MapBox data={data} territorial compact selectedRouteIds={[...new Set(data.routeShapes?.features.map(f=>String(f.properties?.route_id)) ?? [])]} />
                   <Panel
                     title="Leitura por bairro"
                     subtitle="Área calculada em SIRGAS 2000 / UTM 22S (EPSG:31982)"
@@ -1381,9 +1342,10 @@ function App() {
                             <th>Bairro</th>
                             <th>População 2022²</th>
                             <th>Área (km²)</th>
-                            <th>Paradas da base</th>
+                            <th>Paradas da amostra</th>
                             <th>Paradas/km²</th>
                             <th>Área até 300 m³</th>
+                            <th>Linhas na amostra</th><th>Traçados únicos (km)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1398,7 +1360,7 @@ function App() {
                                 {n.covered_area_pct == null
                                   ? "Não disponível"
                                   : number(n.covered_area_pct, 1) + "%"}
-                              </td>
+                              </td><td>{number(n.reference_route_count)}</td><td>{number(n.reference_route_km,2)}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -1407,7 +1369,7 @@ function App() {
                     <p className="caption">
                       ² Atributo do arquivo de bairros de referência. Não
                       recalculado por distribuição de área. ³ Buffer euclidiano,
-                      não percurso a pé nem população atendida.
+                      não percurso a pé nem população atendida. Traçados únicos são a união geométrica da amostra, sem duplicar segmentos coincidentes; não representam a rede autorizada completa.
                     </p>
                   </Panel>
                   <Panel title="Limitações da análise">
@@ -1557,7 +1519,7 @@ function App() {
                           </tr>
                           <tr>
                             <td>GoBus, veículos e previsões</td>
-                            <td>API operacional de Canoas não homologada</td>
+                            <td>Cartografia de referência integrada; GPS e ETA em homologação</td>
                             <td>
                               APK 1.29.1.2 analisado estaticamente; validar
                               respostas municipais, autorização e limites
@@ -1587,7 +1549,10 @@ function App() {
                           </tr>
                           <tr>
                             <td>Homologação municipal</td>
-                            <td>Versão 0.2 em desenvolvimento</td>
+                            <td>
+                              Versão 0.3 com cartografia operacional de
+                              referência
+                            </td>
                             <td>
                               Validação dos dados, uso em campo, acessibilidade
                               e aceite formal

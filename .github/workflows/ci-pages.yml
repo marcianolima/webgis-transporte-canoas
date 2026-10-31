@@ -10,6 +10,11 @@ on:
         required: false
         type: boolean
         default: false
+      refresh_geography:
+        description: Atualizar referência TACOM autorizada (HTTP legado; sem GPS)
+        required: false
+        type: boolean
+        default: false
   schedule:
     - cron: "20 8 * * *"
 permissions:
@@ -36,7 +41,9 @@ jobs:
       - uses: actions/cache@v4
         if: github.event_name == 'schedule' || inputs.refresh_data
         with:
-          path: var
+          path: |
+            var/cache
+            var/static-history.sqlite
           key: static-source-${{ github.run_id }}
           restore-keys: static-source-
       - name: Atualizar dados programados (não coleta GPS)
@@ -45,6 +52,14 @@ jobs:
           PYTHONPATH: pipeline
         run: |
           python -m transporte.collect --days 5
+          python scripts/prepare_catalogue.py
+      - name: Atualizar cartografia TACOM de referência (manual e limitada)
+        if: inputs.refresh_geography == true
+        env:
+          PYTHONPATH: pipeline
+        run: |
+          python -m transporte.gobus_geography --authorized --allow-plain-http --service-date today --max-requests 180
+          python -m transporte.publish_geography
           python scripts/prepare_catalogue.py
       - name: Gerar arquivo PMTiles e catálogo de geometrias
         env:

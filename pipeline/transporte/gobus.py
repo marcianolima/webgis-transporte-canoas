@@ -14,6 +14,7 @@ PATHS = {
     'linhas': ('buscarLinhas/retornoJSONListaLinhas', ()),
     'cidades_linhas': ('V3/cidadesLinhas/{cidade}/retornoJSONCidadesLinhas', ('cidade',)),
     'sublinhas': ('V3/retornaSublinhasDaLinha/{linha}/0/{cidade}/retornoSublinhasJSON', ('linha', 'cidade')),
+    'parada_detalhes': ('buscarDadosParada/{parada}/0/retornoJSONPontosItinerario', ('parada',)),
     'paradas_linha': ('V3/buscarParadasPorLinha/{linha}/0/{cidade}/retornoJSON', ('linha', 'cidade')),
     'paradas_geograficas': ('V3/buscarParadasPorLinhaComCoordenadas/{linha}/0/{cidade}/retornoJSONH', ('linha', 'cidade')),
     'itinerario': ('V3/buscarItinerario/{itinerario}/0/{cidade}/retornoJSONItinerario', ('itinerario', 'cidade')),

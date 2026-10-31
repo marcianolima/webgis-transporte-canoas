@@ -9,6 +9,7 @@ import {
   routeColor,
   findArea,
 } from "../map-data";
+import { stopPopup } from "../map-popups";
 import { currentVehicles, brDate } from "../data";
 import type { RuntimeProps } from "./MapRuntime";
 export default function MapLibreRuntime(
@@ -29,6 +30,31 @@ export default function MapLibreRuntime(
           "visibility",
           p.style.theme === name ? "visible" : "none",
         );
+    if (m.getLayer("paradas")) {
+      m.setLayoutProperty(
+        "paradas",
+        "visibility",
+        p.style.showStops === false ? "none" : "visible",
+      );
+      m.setFilter(
+        "paradas",
+        p.style.routeIds.length
+          ? ([
+              "any",
+              ...p.style.routeIds.map((id) => [
+                "in",
+                "," + id + ",",
+                [
+                  "concat",
+                  ",",
+                  ["to-string", ["coalesce", ["get", "route_ids_csv"], ""]],
+                  ",",
+                ],
+              ]),
+            ] as any)
+          : null,
+      );
+    }
     if (m.getLayer("linhas"))
       m.setFilter("linhas", [
         "in",
@@ -130,8 +156,18 @@ export default function MapLibreRuntime(
           source: "territory",
           "source-layer": name,
           paint: {
-            "fill-color": ["step",density,"#d7ead6",3000,"#a4d1b4",10000,"#4b9a86",20000,"#176557"],
-              "fill-opacity": 0.7,
+            "fill-color": [
+              "step",
+              density,
+              "#d7ead6",
+              3000,
+              "#a4d1b4",
+              10000,
+              "#4b9a86",
+              20000,
+              "#176557",
+            ],
+            "fill-opacity": 0.7,
             "fill-outline-color": "#729e90",
           },
         });
@@ -219,6 +255,22 @@ export default function MapLibreRuntime(
       if (!loaded && !disposed) latest.current.onUnsupported();
     });
     m.on("click", (event) => {
+      const foundStops = m.getLayer("paradas")
+        ? m.queryRenderedFeatures(event.point, { layers: ["paradas"] })
+        : [];
+      if (foundStops.length) {
+        const f = latest.current.data.stops.features.find(
+          (f) =>
+            String(f.properties?.stop_id) ===
+            String(foundStops[0].properties.stop_id),
+        );
+        if (f)
+          new maplibregl.Popup()
+            .setLngLat(event.lngLat)
+            .setDOMContent(stopPopup(f))
+            .addTo(m);
+        return;
+      }
       const vehicles = m.getLayer("vehicles")
         ? m.queryRenderedFeatures(event.point, { layers: ["vehicles"] })
         : [];
@@ -269,6 +321,18 @@ export default function MapLibreRuntime(
       if (b) m.fitBounds(b, { padding: 25, maxZoom: 14 });
     }
   }, [JSON.stringify(props.style), props.neighborhood, props.data.routeShapes]);
+  useEffect(() => {
+    const m = map.current;
+    const f = props.data.stops.features.find(
+      (f) => String(f.properties?.stop_id) === props.focusedStopId,
+    );
+    if (!m || f?.geometry.type !== "Point") return;
+    m.flyTo({ center: f.geometry.coordinates as [number, number], zoom: 16 });
+    new maplibregl.Popup()
+      .setLngLat(f.geometry.coordinates as [number, number])
+      .setDOMContent(stopPopup(f))
+      .addTo(m);
+  }, [props.focusedStopId, props.data.stops]);
   useEffect(() => {
     const m = map.current;
     if (!m) return;

@@ -62,6 +62,7 @@ export interface TileStyle {
   theme: string;
   routeIds: string[];
   territorial: boolean;
+  showStops?: boolean;
 }
 export class LocalVectorLayer extends L.GridLayer {
   private tileData = new Map<string, ReturnType<PMTiles["getZxy"]>>();
@@ -123,11 +124,22 @@ export class LocalVectorLayer extends L.GridLayer {
           const layer = tile.layers[name];
           if (!layer) continue;
           for (let i = 0; i < layer.length; i++) {
+            if (name === "paradas" && style.showStops === false) continue;
             const f = layer.feature(i),
               p = f.properties;
             if (
               name === "linhas" &&
               !style.routeIds.includes(String(p.route_id))
+            )
+              continue;
+            if (
+              name === "paradas" &&
+              style.routeIds.length &&
+              !style.routeIds.some((id) =>
+                ("," + String(p.route_ids_csv || "") + ",").includes(
+                  "," + id + ",",
+                ),
+              )
             )
               continue;
             const scale = (256 / f.extent) * factor;

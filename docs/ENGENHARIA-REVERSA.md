@@ -1,5 +1,8 @@
 # Engenharia reversa e validação das fontes
 
+**Estado atual / 31/10/2026:** API TACOM integrada para cartografia de referência: 52 itinerários, 35 linhas e 215 paradas. Não equivale a homologação GPS ou operacional. A amostra de 64 paradas antes considerada local foi identificada em Viamão e descartada. O novo método cruza IDs de linhas/paradas e relações de itinerários observadas em previsões. Ver [relatório 0.3.0](EVOLUCAO-0.3.md).
+
+
 Data da investigação: 30/10/2026, America/Sao_Paulo. Esta documentação distingue observação direta, referência de terceiros e hipótese. Não houve contorno de autenticação, pinning, limites ou barreiras de distribuição.
 
 ## Aplicativo e versões

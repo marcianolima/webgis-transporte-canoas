@@ -90,3 +90,20 @@ export const emptyCollection: FeatureCollection = {
   type: "FeatureCollection",
   features: [],
 };
+
+export function stopRoutes(feature: Feature): string[] {
+  const values = feature.properties?.route_ids;
+  return Array.isArray(values)
+    ? values.map(String)
+    : String(feature.properties?.route_ids_csv || "")
+        .split(",")
+        .filter(Boolean);
+}
+export function selectedStops(data: AppData, ids: string[]): FeatureCollection {
+  return {
+    type: "FeatureCollection",
+    features: data.stops.features.filter(
+      (f) => !ids.length || stopRoutes(f).some((id) => ids.includes(id)),
+    ),
+  };
+}

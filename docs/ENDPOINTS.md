@@ -58,3 +58,7 @@ Feed de entrada do worker: contrato **normalizado próprio**, não uma alegaçã
 ## Arquivos cartográficos da aplicação — 0.2.0
 
 `data/transporte-canoas.pmtiles`: arquivo PMTiles v3/MVT estático publicado no Pages. Leitura GET/Range; alternativa GET completo limitada a 20 MB para servidor sem Range. `data/map-manifest.json`: tamanho, SHA-256, fontes, contagens e disponibilidade por linha. `data/route-shapes.geojson`: geometrias de referência com proveniência, atualmente FeatureCollection vazia com status pendente. Estes arquivos são produtos locais; não são endpoints descobertos do GoBus.
+
+## Recurso individual validado — 31/10/2026
+
+`GET buscarDadosParada/{codParada}/0/retornoJSONPontosItinerario`, relativo à base HTTP MPA do APK. Retorna `sucesso`, `paradas[].cod/siu/x/y/desc`; `x` é longitude, `y` latitude. O ID 8746 foi confirmado na Rua Florianópolis em Canoas. O endpoint geográfico por linha devolveu a mesma lista de 64 pontos de Viamão para três parâmetros e foi excluído da publicação. A consulta de listas por linha permanece utilizável para IDs; detalhes/proximidade fornecem coordenadas, cruzadas pelos mesmos IDs. Ver [evidências e método](EVOLUCAO-0.3.md).

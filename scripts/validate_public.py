@@ -2,7 +2,7 @@ import json,sys,hashlib
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'pipeline'))
 from transporte.audit import timestamp
-from transporte.geo import valid_coordinate
+from transporte.geo import valid_coordinate, MunicipalReferenceArea
 ROOT=Path(__file__).resolve().parents[1];data=ROOT/'public/data'
 def main():
     n=json.loads((data/'network.json').read_text());routes={x['id'] for x in n['routes']}
@@ -36,6 +36,21 @@ def main():
     geometries=json.loads((data/'route-shapes.geojson').read_text())['features']
     assert all(f['properties']['route_id'] in routes for f in geometries)
     assert manifest['route_geometry_count']==len({f['properties']['route_id'] for f in geometries})
+    area=MunicipalReferenceArea(json.loads((data/'bairros-oficiais.geojson').read_text()))
+    for f in geometries:
+        p=f['properties'];assert p['status']=='reference' and p.get('homologated') is not True
+        assert p['source_url'].startswith(('https://','http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/'))
+        assert timestamp(p['fetched_at']) and len(p['source_sha256'])==64
+        if p.get('source')=='TACOM-GoBus':
+            quality=area.line(f);assert quality['local_length_pct']>=80 and quality['max_boundary_distance_m']<=1500
+    stop_features=json.loads((data/'stops.geojson').read_text())['features'];ids=[]
+    for f in stop_features:
+        p=f['properties'];ids.append(p['stop_id']);assert p['status']=='reference' and p['homologated'] is False
+        assert set(p['route_ids']).issubset(routes) and p['route_ids']
+        assert area.point(*f['geometry']['coordinates']) and timestamp(p['fetched_at']) and len(p['source_sha256'])==64
+    assert len(ids)==len(set(ids)) and manifest['layers']['paradas']==len(ids)
+    for name in ['route-shapes.geojson','stops.geojson','transport-geography.json']:
+        assert not any(key in (data/name).read_text() for key in ['numVeicGestor','vehicle_id','"body":'])
     assert not json.loads((data/'boundary.geojson').read_text())['features'][0]['properties']['is_official_municipal_boundary']
     print(json.dumps({'status':'passed','routes':len(routes),'departures':len(keys),'dates':len(n['source_dates']),'public_bytes':sum(p.stat().st_size for p in data.iterdir())}))
 if __name__=='__main__':main()
