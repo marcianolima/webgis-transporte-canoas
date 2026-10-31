@@ -19,6 +19,7 @@ PATHS = {
     'paradas_geograficas': ('V3/buscarParadasPorLinhaComCoordenadas/{linha}/0/{cidade}/retornoJSONH', ('linha', 'cidade')),
     'itinerario': ('V3/buscarItinerario/{itinerario}/0/{cidade}/retornoJSONItinerario', ('itinerario', 'cidade')),
     'veiculos': ('V3/retornaVeiculosMapa/{itinerario}/0/{cidade}/retornoJSONVeiculos', ('itinerario', 'cidade')),
+    'veiculo_embarcado': ('retornaVeiculoEmbarcado/{veiculo}/retornoJSONVeiculos', ('veiculo',)),
     'previsoes': ('V3/buscarPrevisoes/{parada}/{acessivel}/0/{cidade}/retornoJSON', ('parada', 'acessivel', 'cidade')),
     'horarios': ('V3/retornaQroLinha/{linha}/0/{cidade}/retornoJSON', ('linha', 'cidade')),
     'paradas_proximas': ('V3/buscarParadasProximas/{longitude}/{latitude}/0/{cidade}/retornoJSONH', ('longitude', 'latitude', 'cidade')),
@@ -111,21 +112,55 @@ def itinerary(raw: str, itinerary_id: str) -> dict[str, Any]:
             'properties': {'source': 'gobus-apk-contract', 'itinerary_id': str(itinerary_id),
                            'homologated': False}}
 
+def direction_info(value: Any) -> tuple[float | None, str]:
+    """O GoBus usa octantes 0–7, *não* ângulos em graus.
+
+    0=Norte é uma hipótese visual baseada na rotação CSS de 45° no APK:
+    bearing não é um azimute homologado da telemetria embarcada.
+    SC=sem comunicação, SG=sem GPS. Não sugerir heading nesses estados.
+    """
+    if value is None or str(value).strip() == '':
+        return None, 'ok'
+    code = str(value).strip().upper()
+    if code in ('SC', 'SG'):
+        return None, code
+    if code in ('0', '1', '2', '3', '4', '5', '6', '7'):
+        return int(code) * 45.0, 'ok'
+    raise ValueError('Octante/sinal GoBus inválido')
+
+
 def vehicles(raw: str) -> list[dict[str, Any]]:
+    """Lê veiculos[] ou veiculo{}, sem executar JSONP nem criar timestamps GPS."""
     data = payload(raw)
-    source = data.get('veiculos', [])
-    if not isinstance(source, list):
-        raise ValueError('Lista de veículos inválida')
+    if 'veiculos' in data:
+        source = data['veiculos']
+        if not isinstance(source, list):
+            raise ValueError('Lista de veículos inválida')
+    elif 'veiculo' in data:
+        source = [data['veiculo']] if data['veiculo'] else []
+    else:
+        raise ValueError('Resposta sem campo de veículo')
     result = []
     for row in source:
-        if not isinstance(row, dict) or not row.get('numVeicGestor'):
+        if not isinstance(row, dict) or not str(row.get('numVeicGestor') or '').strip():
             raise ValueError('Veículo sem identificador')
-        lng, lat = coordinate(row.get('long'), row.get('lat'))
-        result.append({'vehicle_id': str(row['numVeicGestor']), 'longitude': lng,
-                       'latitude': lat, 'route_display': row.get('descricao'),
-                       'direction': row.get('direcao'), 'source_vehicle_code': row.get('cod'),
-                       'source_timestamp': None, 'homologated': False})
+        bearing, status = direction_info(row.get('direcao'))
+        lon = lat = None
+        if row.get('long') not in (None, '') and row.get('lat') not in (None, ''):
+            lon, lat = coordinate(row['long'], row['lat'])
+        elif status == 'ok':
+            raise ValueError('Veículo com sinal ativo sem coordenadas')
+        result.append({
+            'vehicle_id': str(row['numVeicGestor']).strip(),
+            'longitude': lon, 'latitude': lat,
+            'route_display': row.get('descricao'), 'direction': row.get('direcao'),
+            'bearing': bearing, 'bearing_basis': 'apk_octant_north_unverified' if bearing is not None else None,
+            'signal_status': status, 'source_vehicle_code': row.get('cod'),
+            'stop_sequence': row.get('sequencia'),
+            'source_timestamp': None, 'homologated': False
+        })
     return result
+
 
 def predictions(raw: str) -> list[dict[str, Any]]:
     data = payload(raw)
