@@ -1,0 +1,26 @@
+{
+  "_comment": "Modelo ilustrativo. Substitua todos os IDs pelos retornados pela TACOM e confirme as associações com o cadastro NGS antes de usar.",
+  "municipality_code": "4304606",
+  "city": "CAN",
+  "authorization_confirmed": false,
+  "city_confirmed": false,
+  "reference_date": "2026-10-30",
+  "cities_file": "cidades-VALIDADO.jsonp",
+  "lines_file": "linhas-VALIDADO.jsonp",
+  "mapping": [
+    {
+      "siu_line_id": "17",
+      "ngs_route_id": "05000",
+      "crosswalk_approved": false,
+      "stops_file": "paradas_geograficas-17-CAPTURA.jsonp",
+      "itineraries": [
+        {
+          "id": "123",
+          "file": "itinerario-123-CAPTURA.jsonp",
+          "direction": "Sentido validado",
+          "relation_approved": false
+        }
+      ]
+    }
+  ]
+}
