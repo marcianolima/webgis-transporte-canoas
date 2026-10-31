@@ -1,0 +1,42 @@
+# Proxy HTTPS opcional; sem certificados válidos o serviço não inicia.
+# O Nginx sobrescreve X-Real-IP e o backend só o utiliza quando a origem
+# do proxy estiver em TRUSTED_PROXY_CIDRS explicitamente configurado.
+limit_req_zone $binary_remote_addr zone=vehicles:10m rate=30r/m;
+limit_req_zone $binary_remote_addr zone=general_api:10m rate=5r/s;
+server {
+    listen 443 ssl;
+    server_name ${API_HOST};
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_timeout 10m;
+    ssl_prefer_server_ciphers off;
+    client_max_body_size 64k;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy no-referrer always;
+
+    location = /v1/vehicles {
+        limit_req zone=vehicles burst=5 nodelay;
+        proxy_pass http://api:8000/v1/vehicles;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 15s;
+        proxy_connect_timeout 5s;
+    }
+
+    location / {
+        limit_req zone=general_api burst=15 nodelay;
+        proxy_pass http://api:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 30s;
+        proxy_connect_timeout 5s;
+    }
+}
