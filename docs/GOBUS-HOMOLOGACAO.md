@@ -63,6 +63,12 @@ Cada execução consulta e verifica `cidadesLinhas` e `buscarLinhas`, restringe 
 
 O identificador de itinerário não pode ser derivado diretamente de todo `codLinha` ou do quadro textual de horários. Pode aparecer em `buscarPrevisoes` de uma parada atendida, **mas apenas para veículos que naquele momento possuem previsão**, e pode variar com serviço/dia. Para cobertura total das variantes, solicitar à TACOM uma tabela oficial de **linha ↔ sublinha ↔ sentido ↔ itinerário ↔ validade**; não adivinhar IDs por enumeração.
 
+### Diagnóstico adicional: itinerários e sublinhas da linha 05006
+
+A sonda de cinco paradas obteve **37 previsões** e **nenhuma relação de itinerário municipal validável** sob o contrato interpretado. Uma consulta específica `V3/retornaSublinhasDaLinha/{codLinha}/0/MPA/retornoSublinhasJSON` respondeu `sucesso` e `subLinhas=[]`. Esses resultados **não provam inexistência de percursos**; indicam apenas que a associação não está disponível pelas leituras testadas.
+
+**Dependência a solicitar à TACOM:** exportação estática da relação `codLinha → código de sublinha → codItinerario → sentido/variante → vigência`, ou documentação oficial de como recuperá-la. Sem ela não publicar geometrias por associação inferida nem enumerar identificadores de itinerário.
+
 ## 3. Correspondência entre bases
 
 Use `examples/gobus-staging-manifest.example.json` como modelo. Exige:
