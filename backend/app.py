@@ -81,27 +81,39 @@ def create_app(store=None):
 
     @app.get('/v1/vehicles')
     def vehicles(request: Request, _limit=Depends(vehicle_limit)):
+        # A homologação técnica não substitui autorização de divulgação pública.
+        # Exigir SEMPRE o opt-in explícito e independente.
+        public_allowed = os.getenv('PUBLIC_POSITIONS_ENABLED') == 'true'
+        if not public_allowed:
+            return {
+                'status':'unavailable', 'generated_at':None, 'vehicles':[],
+                'message':'Publicação de posições não autorizada; sem inferência de viagens ou cancelamentos.'
+            }
         now=datetime.now(timezone.utc)
         values=db.latest((now-timedelta(minutes=3)).isoformat())
-        values=[p for p in values if timestamp(p['observed_at'])<=now+timedelta(seconds=30)]
+        values=[p for p in values if
+                timestamp(p['observed_at']) <= now+timedelta(seconds=30) and
+                p.get('municipality_code') == '4304606' and
+                p.get('scope') == 'municipal']
+        complete = os.getenv('SOURCE_HOMOLOGATED') == 'true'
         fields=('vehicle_id','route_id','longitude','latitude','observed_at','fetched_at',
                 'source_observed_at','time_basis','signal_status','stale_polls',
                 'source_itinerary_id','route_relation','bearing_basis',
                 'speed_kmh','bearing','source_id')
-        complete = os.getenv('SOURCE_HOMOLOGATED') == 'true'
-        reference = os.getenv('PUBLIC_POSITIONS_ENABLED') == 'true'
-        status = 'available' if complete else 'reference' if reference else 'unavailable'
-        visible = values if status != 'unavailable' else []
+        # Nunca declarar telemetria homologada quando faltam timestamps GPS nativos.
+        fully_homologated = complete and all(
+            p.get('time_basis', 'source_gps') == 'source_gps' and
+            p.get('source_observed_at') for p in values
+        )
+        status='available' if fully_homologated else 'reference'
         return {
             'status':status,
-            'generated_at':max((p['fetched_at'] for p in visible),default=None),
-            'vehicles':[{k:p.get(k) for k in fields} for p in visible],
+            'generated_at':max((p.get('fetched_at') or p['observed_at'] for p in values),default=None),
+            'vehicles':[{k:p.get(k) for k in fields} for p in values],
             'message':('Posições por consulta à TACOM, sem timestamp GPS de origem; '
                        'linhas/itinerários de referência, não homologação operacional.'
                        if status=='reference' else
-                       'Posições observadas; registros acima de 3 minutos são omitidos.'
-                       if status=='available' else
-                       'Dados operacionais indisponíveis ou publicação não autorizada.')
+                       'Posições observadas; registros acima de 3 minutos são omitidos.')
         }
 
     @app.get('/internal/positions',dependencies=[Depends(authorized)])
