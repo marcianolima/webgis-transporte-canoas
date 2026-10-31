@@ -7,7 +7,7 @@ from shapely.geometry import Point, LineString
 from shapely.ops import transform
 from .geo import PROJECT, valid_coordinate
 
-VERSION = 'audit-0.1.0'
+VERSION = 'audit-0.2.0'
 GEOD = Geod(ellps='GRS80')
 
 
@@ -26,17 +26,41 @@ def normalize_position(value, now=None):
         raise ValueError('Registro fora do escopo municipal de Canoas')
     if not valid_coordinate(value['longitude'], value['latitude']):
         raise ValueError('Coordenada fora da área operacional esperada')
-    observed = timestamp(value['observed_at'])
     now = now or datetime.now(timezone.utc)
-    if (observed - now).total_seconds() > 30:
+    observed = timestamp(value['observed_at'])
+    fetched = timestamp(value['fetched_at']) if value.get('fetched_at') else now
+    if (observed - now).total_seconds() > 30 or (fetched - now).total_seconds() > 30:
         raise ValueError('Posição no futuro')
-    result = {k: value[k] for k in required} | {'scope': 'municipal', 'longitude': float(value['longitude']),
-        'latitude': float(value['latitude']), 'observed_at': observed.isoformat(), 'fetched_at': now.isoformat()}
+    time_basis = value.get('time_basis', 'source_gps')
+    if time_basis not in ('client_fetch', 'source_gps'):
+        raise ValueError('Base temporal desconhecida')
+    if time_basis == 'client_fetch' and abs((observed-fetched).total_seconds()) > 1:
+        raise ValueError('client_fetch exige observed_at=fetched_at')
+    signal = value.get('signal_status', 'ok')
+    if signal not in ('ok', 'SC', 'SG'):
+        raise ValueError('Estado do sinal inválido')
+    stale = value.get('stale_polls', 0)
+    if type(stale) is not int or not 0 <= stale <= 9999:
+        raise ValueError('stale_polls inválido')
+    result = {k:value[k] for k in required} | {
+        'scope':'municipal', 'municipality_code':'4304606',
+        'longitude':float(value['longitude']), 'latitude':float(value['latitude']),
+        'observed_at':observed.isoformat(), 'fetched_at':fetched.isoformat(),
+        'source_observed_at':None if time_basis=='client_fetch' else value.get('source_observed_at'),
+        'time_basis':time_basis, 'signal_status':signal, 'stale_polls':stale,
+        'source_itinerary_id':value.get('source_itinerary_id'),
+        'route_relation':value.get('route_relation','unknown'),
+        'bearing_basis':value.get('bearing_basis')
+    }
     for k, low, high in [('speed_kmh',0,180),('bearing',0,360)]:
         v = value.get(k)
         if v is not None and (not isinstance(v,(int,float)) or isinstance(v,bool) or not math.isfinite(v) or not low <= v <= high):
             raise ValueError(k + ' fora do domínio')
         result[k] = v
+    if time_basis == 'client_fetch' and result['speed_kmh'] is not None:
+        raise ValueError('Velocidade não pode ser atribuída a consulta sem timestamp do GPS')
+    if signal != 'ok' and result['bearing'] is not None:
+        raise ValueError('SC/SG não possuem direção atual confiável')
     return result
 
 
@@ -62,17 +86,20 @@ def trajectory_events(positions, authorized_shape=None, now=None):
         _, _, meters = GEOD.inv(previous['longitude'],previous['latitude'],current['longitude'],current['latitude'])
         evidence = [{'vehicle_id': p['vehicle_id'], 'source_id': p['source_id'], 'route_id': p['route_id'],
                      'observed_at': p['observed_at'], 'longitude': p['longitude'], 'latitude': p['latitude']} for p in (previous,current)]
+        client_fetch = any(p.get('time_basis') == 'client_fetch' for p in (previous,current))
         speed = meters / seconds * 3.6
         if seconds <= 180 and speed > 100:
             events.append(occurrence('gps_jump', 'inconclusive', evidence, implied_speed_kmh=round(speed,2), gap_seconds=seconds,
-                                     note='Pode ser erro de GPS; não comprova velocidade praticada'))
+                                     time_basis='client_fetch' if client_fetch else 'source_gps',
+                                     note='Distância/intervalo entre consultas, NÃO velocidade do ônibus; origem não fornece timestamp GPS.' if client_fetch else 'Pode ser erro de GPS; não comprova velocidade praticada'))
         if seconds > 180:
             events.append(occurrence('sampling_gap', 'inconclusive', evidence, gap_seconds=seconds))
         if metric_route is not None and seconds <= 90:
             distances = [transform(PROJECT, Point(p['longitude'],p['latitude'])).distance(metric_route) for p in (previous,current)]
             if min(distances)>100:
-                events.append(occurrence('possible_deviation','probable',evidence,distances_m=distances,
-                                         note='Conferir versão do itinerário, precisão e desvios autorizados'))
+                qualified = not client_fetch and all(p.get('route_relation','homologated')=='homologated' for p in (previous,current))
+                events.append(occurrence('possible_deviation','probable' if qualified else 'inconclusive',evidence,distances_m=distances,
+                                         note='Tempo de consulta e/ou itinerário de referência não homologado; não comprova desvio.' if not qualified else 'Conferir versão do itinerário, precisão e desvios autorizados'))
     # Parada prolongada exige >= 4 amostras, cobertura contínua e duração >= 10 min.
     for start in range(len(positions)):
         first = positions[start]
@@ -87,7 +114,7 @@ def trajectory_events(positions, authorized_shape=None, now=None):
             window.append(value)
         if len(window)>=4 and (timestamp(window[-1]['observed_at'])-timestamp(first['observed_at'])).total_seconds()>=600:
             events.append(occurrence('prolonged_stationary','inconclusive',window,
-                note='Pode ocorrer em terminal, semáforo, congestionamento ou intervalo de serviço'))
+                note='Coordenadas repetidas em consultas não provam veículo parado, especialmente sem timestamp GPS; também pode ocorrer em terminal, congestionamento ou intervalo de serviço.'))
             break
     return events
 
