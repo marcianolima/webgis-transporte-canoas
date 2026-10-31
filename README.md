@@ -6,7 +6,7 @@ Plataforma de informação e análise do transporte coletivo municipal de Canoas
 
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
-[Integração experimental de veículos 0.5](docs/GOBUS-LIVE.md) · [Ofício técnico à TACOM/Sogal](docs/OFICIO-TACOM-GPS.md) · [Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Cobertura e cartografia 0.4.0](docs/COBERTURA-PARADAS.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
+[Integração experimental de veículos 0.5](docs/GOBUS-LIVE.md) · [Aceite operacional e passos de implantação](docs/ACEITE-OPERACIONAL-GPS.md) · [Ofício técnico à TACOM/Sogal](docs/OFICIO-TACOM-GPS.md) · [Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Cobertura e cartografia 0.4.0](docs/COBERTURA-PARADAS.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
 
 ## Próxima evolução experimental — posições reais GoBus (não ativadas no Pages)
 
