@@ -1,4 +1,5 @@
 name: GoBus TACOM · sonda autorizada de catálogo
+# Execução controlada: uma chamada a cidadesApp e uma a buscarLinhas.
 on:
   push:
     paths:
