@@ -85,7 +85,7 @@ API/SQLite e contratos foram testados localmente. Docker/PostgreSQL/PostGIS, TLS
 
 ## Compatibilidade cartográfica
 
-MapLibre é o renderizador principal. Se WebGL não estiver disponível, a aplicação usa Leaflet/SVG com os mesmos polígonos locais. O fundo viário OSM é opcional e vem desligado: assim o mapa territorial abre sem depender de tiles ou chaves externas. O navegador de teste recebeu tiles de bloqueio do servidor OSM; esse fato não invalida as camadas locais. Para publicação, respeitar a política do fornecedor de tiles; não prefetch, não proxy para contornar bloqueios. Nenhuma chave CARTO ou de terceiros foi incorporada.
+O modo compatível Leaflet/Canvas MVT é padrão; MapLibre pode ser selecionado quando WebGL estiver disponível. Ambos usam as camadas PMTiles locais, com alternativa GeoJSON. O fundo viário OSM é opcional e vem desligado: assim o mapa territorial abre sem depender de tiles ou chaves externas. O navegador de teste recebeu tiles de bloqueio do servidor OSM; esse fato não invalida as camadas locais. Para publicação, respeitar a política do fornecedor de tiles; não prefetch, não proxy para contornar bloqueios. Nenhuma chave CARTO ou de terceiros foi incorporada.
 
 As execuções estáticas e do worker registram `running` antes da consulta remota. Uma interrupção abrupta deixa uma execução sem encerramento, visível para diagnóstico, sem declará-la bem sucedida. Após recuperação, conferir essas entradas e os dados persistidos antes de reprocessar.
 
@@ -96,3 +96,7 @@ O workflow regenera PMTiles antes da validação. A publicação inclui o arquiv
 ## Cartografia TACOM 0.3.0
 
 Consultar [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). O workflow tem opção manual `refresh_geography`, desligada por padrão. Corpos TACOM ficam somente no diretório privado e não são incluídos no cache público do Actions. O agendamento diário continua para programação NGS. A coleta cartográfica usa previsões apenas para descobrir IDs de itinerário; não cria coleta contínua de GPS.
+
+## Retomada de cartografia 0.3.1
+
+Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md) para os comandos, timeout de 60 s, retry limitado, journals, rollback e limites de persistência no Actions. Conservar `var/gobus/` em disco privado persistente com backup. Repetir o comando reaproveita capturas válidas; não apagar o cache para retomar. Uma coleta incompleta não deve ser publicada.

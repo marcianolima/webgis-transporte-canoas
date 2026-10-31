@@ -58,7 +58,7 @@ jobs:
         env:
           PYTHONPATH: pipeline
         run: |
-          python -m transporte.gobus_geography --authorized --allow-plain-http --service-date today --max-requests 180
+          python -m transporte.gobus_geography --authorized --allow-plain-http --service-date today --max-requests 180 --timeout 60 --retries 2
           python -m transporte.publish_geography
           python scripts/prepare_catalogue.py
       - name: Gerar arquivo PMTiles e catálogo de geometrias

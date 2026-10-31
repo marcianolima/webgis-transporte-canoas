@@ -1,5 +1,8 @@
 # Versão 0.3.0 — geometrias reais de linhas e paradas
 
+**Revisão atual 0.3.1:** 57 itinerários de 36 linhas e 385 paradas; retomada sem perda dos registros anteriores. Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md). Os números da 0.3.0 abaixo são históricos.
+
+
 Investigação e coleta: **31/10/2026**, America/Sao_Paulo. Base de código inicial desta revisão: `21e7e34a36d11f6156b501133371fec51dcdc6b3`. Os avanços anteriores de análise do APK, parsing, sondagens, correspondências e staging foram preservados.
 
 ## Resultado

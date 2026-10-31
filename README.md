@@ -2,15 +2,17 @@
 
 Plataforma de informação e análise do transporte coletivo municipal de Canoas/RS, com programação real da Sogal, cartografia local, metodologia aberta e infraestrutura para histórico e fiscalização.
 
-**Versão 0.3.0 — 52 itinerários de 35 linhas e 215 paradas reais da API TACOM em PMTiles; GPS contínuo ainda não homologado.** Não é declarado atendimento integral da versão 1.0. Não há veículos ou viagens simulados.
+**Versão 0.3.1 — 57 itinerários de 36 linhas e 385 paradas reais da API TACOM em PMTiles; GPS contínuo ainda não homologado.** Não é declarado atendimento integral da versão 1.0. Não há veículos ou viagens simulados.
 
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
-[Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Coleta e cartografia 0.3.0](docs/EVOLUCAO-0.3.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
+[Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Retomada e cartografia 0.3.1](docs/RETOMADA-COLETA.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
 
 ## Cartografia TACOM — 31/10/2026
 
-**52 itinerários geográficos, 35 linhas com percurso e 215 paradas**, consultados na API do APK e publicados como referência com fonte, SHA-256 e hora de obtenção. Não foram criadas linhas ligando pontos de parada. Sete itinerários têm trechos na borda da união dos bairros e sinalização para revisão. A amostra não cobre todas as variantes ou paradas nem homologa vigência, sentido ou equivalência aos horários NGS. Consulte [método e limitações](docs/EVOLUCAO-0.3.md).
+**57 itinerários geográficos, 36 linhas com percurso e 385 paradas**, consultados na API do APK e publicados como referência com fonte, SHA-256 e hora de obtenção. Não foram criadas linhas ligando pontos de parada. Oito itinerários têm trechos na borda da união dos bairros e sinalização para revisão. A amostra não cobre todas as variantes ou paradas nem homologa vigência, sentido ou equivalência aos horários NGS. Consulte [método e limitações atuais](docs/RETOMADA-COLETA.md).
+
+A retomada recebeu 77 respostas da API e reaproveitou 114 capturas em cache, sem erros. A mesclagem preserva os dados anteriores; timeout de 60 s, retry limitado e preparação isolada do PMTiles protegem a atualização. [Resultado e procedimentos de retomada](docs/RETOMADA-COLETA.md).
 
 ## Dados efetivamente obtidos
 
@@ -32,7 +34,7 @@ Bases locais: **18 bairros oficiais** reutilizados do GeoCanoas/WebGIS Empreende
 
 - Dez páginas: Painel Geral, Mapa de Transporte, Linhas e Itinerários, Pontos de Parada, Monitoramento, Auditoria Operacional, Indicadores, Análise Territorial, Relatórios e Dados e Metodologia.
 - Consulta por data e linha, busca por código/nome, sentidos e saídas programadas, identificação da madrugada seguinte e itinerários textuais originais.
-- Mapa PMTiles local de bairros e setores, com modo compatível sem WebGL e MapLibre selecionável; densidade, seleção de bairros, popups, localização mediante permissão e fallback GeoJSON. Seleção de várias linhas, desenho e enquadramento quando existe geometria real; 35/81 linhas com geometrias de referência; amostra parcial e não homologada operacionalmente. Importador GeoJSON/GTFS com proveniência, escopo municipal e histórico local.
+- Mapa PMTiles local de bairros e setores, com modo compatível sem WebGL e MapLibre selecionável; densidade, seleção de bairros, popups, localização mediante permissão e fallback GeoJSON. Seleção de várias linhas, desenho e enquadramento quando existe geometria real; 36/81 linhas com geometrias de referência; amostra parcial e não homologada operacionalmente. Importador GeoJSON/GTFS com proveniência, escopo municipal e histórico local.
 - Temas claro/escuro, menu lateral no desktop e menu móvel com página ativa visível.
 - Indicadores de programação, distribuição horária, comparações por data e ranking de saídas por linha, com fórmulas e limites explícitos.
 - Relatórios filtrados por data, linha, sentido e horas de serviço; CSV/JSON; impressão para PDF; bases GeoJSON locais.
@@ -47,7 +49,7 @@ O aplicativo `com.tacom.canoas.gobus` foi identificado na loja TACOM; versão 1.
 
 **Engenharia reversa do APK 1.29.1.2 e validação de serviços em 30/10/2026:** confirmado Cordova, host `mpa.siumobile.com.br:6060` (HTTP legado), rotinas JSONP de linhas, cidades, paradas geográficas, itinerários, veículos e previsões. Em sondagens GET autorizadas de leitura, o host respondeu e o catálogo geral apresentou **1.070 registros da praça MPA** de **14 códigos de município**. O serviço `V3/cidadesLinhas/MPA` identificou **Canoas como `codcid=4`**. Filtragem por esse código resultou em **204 registros de linhas TACOM**; **72 registros** tinham `sgl` coincidente com o catálogo Sogal/NGS de 81 IDs (apenas candidaturas ao cruzamento). A amostra inicial de 64 paradas do serviço de coordenadas por linha foi reavaliada em 31/10: os pontos eram de Viamão e foram descartados. O novo fluxo consulta IDs de paradas das listas municipais, recupera coordenadas individuais/proximidade e observa IDs de itinerário nas previsões de paradas corretas. Isso permitiu obter a cartografia real descrita acima.
 
-**Escopo desta versão:** cartografia TACOM de referência publicada com origem, hash, data e estado não homologado: 52 itinerários de 35 linhas e 215 paradas. Não se apresentam GPS, ETA, viagens realizadas ou infrações sem evidências temporais. Sentidos, variantes, vigência e equivalência com a programação NGS continuam em conferência. [Relatório atual](docs/EVOLUCAO-0.3.md).
+**Escopo desta versão:** cartografia TACOM de referência publicada com origem, hash, data e estado não homologado: 57 itinerários de 36 linhas e 385 paradas. Não se apresentam GPS, ETA, viagens realizadas ou infrações sem evidências temporais. Sentidos, variantes, vigência e equivalência com a programação NGS continuam em conferência. [Relatório atual](docs/RETOMADA-COLETA.md).
 
 **Ainda pendente:** vínculo SIU→NGS homologado para itinerários e sentidos, cobertura de todas as linhas/variantes e atualização das paradas, canal HTTPS e limites do fornecedor, timestamp original e contrato de GPS. A obtenção de uma resposta de API de leitura não autoriza concluir que a telemetria esteja apta à auditoria operacional.
 
@@ -80,7 +82,7 @@ PYTHONPATH=pipeline .venv/bin/pytest -q
 PYTHONPATH=pipeline .venv/bin/python scripts/validate_public.py
 ```
 
-Resultado local da revisão 0.3.0: **111 testes Python e 25 testes TypeScript/React aprovados**, além de lint, build e validação dos dados públicos. As execuções remotas estão no [GitHub Actions](https://github.com/marcianolima/webgis-transporte-canoas/actions). Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
+Resultado local da revisão 0.3.1: **123 testes Python e 25 testes TypeScript/React aprovados**, além de lint, build e validação dos dados públicos. As execuções remotas estão no [GitHub Actions](https://github.com/marcianolima/webgis-transporte-canoas/actions). Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
 
 ## Atualização dos dados e publicação
 

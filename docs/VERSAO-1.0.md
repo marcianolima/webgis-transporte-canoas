@@ -1,6 +1,6 @@
 # Caminho verificável para a versão 1.0 — 31/10/2026
 
-A versão 0.3.0 publica **52 itinerários de 35 linhas e 215 paradas TACOM**, com origem, hashes e datas, além de programação real NGS e território. São referências da API; não homologam vigência, equivalência aos horários ou operação atual. Consulte [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md).
+A versão 0.3.1 publica **57 itinerários de 36 linhas e 385 paradas TACOM**, com origem, hashes e datas, além de programação real NGS e território. São referências da API; não homologam vigência, equivalência aos horários ou operação atual. Consulte [RETOMADA-COLETA.md](RETOMADA-COLETA.md).
 
 | Critério | Estado atual | Dependência para encerramento |
 | --- | --- | --- |
@@ -8,8 +8,9 @@ A versão 0.3.0 publica **52 itinerários de 35 linhas e 215 paradas TACOM**, co
 | Frontend e mapa | PMTiles local, filtros, modo compatível e fallback GeoJSON | Testes em aparelhos e navegadores usados em campo |
 | Cartografia territorial | 18 bairros e 659 setores locais | Revalidar fonte original; obter limite municipal homologado |
 | Linhas e horários | 81 IDs, 4.990 saídas, cinco datas no snapshot de 30/10/2026 | Acompanhar alterações, calendários e programação oficial |
-| Trajetos | 52 itinerários de 35 linhas, todos de referência; sete sob revisão de borda | Completar sentidos/variantes, vigência e vínculos; não inferir remoção de ausência em amostra |
-| Paradas | 215 coordenadas e vínculos por IDs de listas municipais; cobertura parcial | Completar os 1.266 IDs consultados e demais linhas; homologar sequência/atendimento |
+| Trajetos | 57 itinerários de 36 linhas, todos de referência; oito sob revisão de borda | Completar sentidos/variantes, vigência e vínculos; não inferir remoção de ausência em amostra |
+| Paradas | 385 coordenadas e vínculos por IDs de listas municipais; cobertura parcial | Completar os 1.433 IDs consultados e demais linhas; homologar sequência/atendimento |
+| Retomada da coleta | Cache/histórico, timeout, retry, progresso e publicação isolada testados | Disco privado persistente para conservar capturas entre runners |
 | Engenharia reversa | APK e contratos mapeados; problema do serviço de coordenadas por linha isolado | Acordar contrato estável e canal seguro de produção com fornecedor |
 | GPS e ETA público | Não publicados como monitoramento atual | Timestamp de medição embarcada, limites, adaptador real e infraestrutura persistente |
 | Histórico e backend | Código, SQLite e modelo PostgreSQL/PostGIS preparados | Hospedagem, TLS, backups e recuperação testada em produção |

@@ -33,9 +33,9 @@ Consultar `ENGENHARIA-REVERSA.md` para a pesquisa histórica da família SIU. **
 
 A análise do APK confirmou o host configurado `http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/` e caminhos de GET/JSONP para `buscarLinhas`, `cidadesApp`, `V3/buscarItinerario`, `V3/retornaVeiculosMapa`, `V3/buscarParadasPorLinhaComCoordenadas`, `V3/buscarPrevisoes`, `V3/retornaQroLinha` e outros. Contratos e campos: [relatório da análise do APK](APK-GOBUS-1.29.1.2.md).
 
-**Resultados operacionais observados, sem publicação automática:** `cidadesApp` retornou lista de cidades vazia; `buscarLinhas` retornou 1.070 registros da praça MPA; `V3/cidadesLinhas/MPA/retornoJSONCidadesLinhas` confirmou a relação `CANOAS → codcid 4`. O filtro `praca=MPA` e `codcid=4` identificou 204 linhas TACOM. Destas, 72 registros apresentaram código `sgl` exato candidato ao catálogo NGS de 81 IDs. Uma linha de teste, `05006`, retornou 64 paradas georreferenciadas coerentes com a região e sete previsões consultadas em uma parada, mas não confirmou ID de itinerário ativo para essa linha.
+**Resultados operacionais observados, sem publicação automática:** `cidadesApp` retornou lista de cidades vazia; `buscarLinhas` retornou 1.070 registros da praça MPA; `V3/cidadesLinhas/MPA/retornoJSONCidadesLinhas` confirmou a relação `CANOAS → codcid 4`. O filtro `praca=MPA` e `codcid=4` identificou 204 linhas TACOM. Destas, 72 registros apresentaram código `sgl` exato candidato ao catálogo NGS de 81 IDs. Uma linha de teste, `05006`, retornou 64 pontos posteriormente identificados em Viamão e descartados; as previsões dessa amostra não foram promovidas à rede municipal. O serviço de coordenadas por linha foi excluído do coletor.
 
-Consultas e normalização ficam nos scripts de sondagem de catálogo e geografia; relatórios e controles em [GOBUS-HOMOLOGACAO.md](GOBUS-HOMOLOGACAO.md). **Trajetos completos, GPS, ETA em produção e redistribuição ao público permanecem pendentes de validação.** As URLs legadas são HTTP, portanto não devem transportar credenciais ou alimentar diretamente a aplicação pública.
+Consultas e normalização ficam nos scripts de sondagem de catálogo e geografia; relatórios e controles em [GOBUS-HOMOLOGACAO.md](GOBUS-HOMOLOGACAO.md). **Amostras reais de trajetos e paradas estão publicadas como referência não homologada; completude, GPS e ETA em produção continuam pendentes.** As URLs legadas são HTTP, portanto não devem transportar credenciais ou alimentar diretamente a aplicação pública.
 
 Geometria de itinerário: `coordX`=longitude, `coordY`=latitude, em ordem; conversão para GeoJSON LineString não certifica vínculo entre os IDs SIU e os códigos NGS do catálogo atual. A telemetria vista pelo cliente não comprova timestamp GPS de origem. O backend operacional e os arquivos PMTiles continuam sujeitos a homologação separada.
 
@@ -55,10 +55,26 @@ A chave é somente do servidor (`ADMIN_API_KEY`, mínimo de 32 caracteres). A co
 
 Feed de entrada do worker: contrato **normalizado próprio**, não uma alegação de compatibilidade direta com SIU. Exige `{vehicles:[{source_id,vehicle_id,route_id,observed_at,longitude,latitude,scope:"municipal",municipality_code:"4304606",speed_kmh?,bearing?}]}`. Registros de outras redes são rejeitados. Adaptador do protocolo efetivo da TACOM depende da validação do APK e amostras.
 
-## Arquivos cartográficos da aplicação — 0.2.0
+## Arquivos cartográficos da aplicação — 0.3.1
 
-`data/transporte-canoas.pmtiles`: arquivo PMTiles v3/MVT estático publicado no Pages. Leitura GET/Range; alternativa GET completo limitada a 20 MB para servidor sem Range. `data/map-manifest.json`: tamanho, SHA-256, fontes, contagens e disponibilidade por linha. `data/route-shapes.geojson`: geometrias de referência com proveniência, atualmente FeatureCollection vazia com status pendente. Estes arquivos são produtos locais; não são endpoints descobertos do GoBus.
+`data/transporte-canoas.pmtiles`: arquivo PMTiles v3/MVT estático publicado no Pages. Leitura GET/Range; alternativa GET completo limitada a 20 MB para servidor sem Range. `data/map-manifest.json`: tamanho, SHA-256, fontes, contagens e disponibilidade por linha. `data/route-shapes.geojson`: 57 itinerários de 36 linhas, como referência com proveniência; `data/stops.geojson` contém 385 paradas. Estes arquivos são produtos locais; não são endpoints descobertos do GoBus.
 
 ## Recurso individual validado — 31/10/2026
 
 `GET buscarDadosParada/{codParada}/0/retornoJSONPontosItinerario`, relativo à base HTTP MPA do APK. Retorna `sucesso`, `paradas[].cod/siu/x/y/desc`; `x` é longitude, `y` latitude. O ID 8746 foi confirmado na Rua Florianópolis em Canoas. O endpoint geográfico por linha devolveu a mesma lista de 64 pontos de Viamão para três parâmetros e foi excluído da publicação. A consulta de listas por linha permanece utilizável para IDs; detalhes/proximidade fornecem coordenadas, cruzadas pelos mesmos IDs. Ver [evidências e método](EVOLUCAO-0.3.md).
+
+## Retomada validada — 31/10/2026, 0.3.1
+
+Nova consulta de cidades confirmou HTTP 200 e Canoas/codcid 4. A coleta seguinte recebeu 77 respostas válidas e reaproveitou 114 capturas em cache, sem falhas. Timeout configurável de 10–90 s, padrão 60 s; até duas novas tentativas somente para falhas transitórias, contabilizadas no orçamento. Detalhes de retomada e persistência: [RETOMADA-COLETA.md](RETOMADA-COLETA.md).
+
+| Serviço GET relativo à base MPA | Parâmetros usados | Resposta observada | Uso atual |
+| --- | --- | --- | --- |
+| `V3/cidadesLinhas/{praça}/retornoJSONCidadesLinhas` | praça `MPA` | `cidade[].cod/desc` | Confirmar Canoas = 4 |
+| `buscarLinhas/retornoJSONListaLinhas` | nenhum | `linhas[].cod/sgl/nom/codcid/praca` | Filtrar MPA/cidade 4 e código exato |
+| `V3/buscarParadasPorLinha/{linha}/0/MPA/retornoJSON` | ID interno de linha confirmado | `paradas[].cod/end/sent` | Vínculos e sentidos de origem |
+| `V3/buscarParadasProximas/{lon}/{lat}/0/MPA/retornoJSONH` | pontos estratificados na base local | `paradas[].cod/x/y/desc/siu` | Coordenadas, exigindo vínculo municipal por ID |
+| `buscarDadosParada/{parada}/0/retornoJSONPontosItinerario` | ID de parada observado | `paradas[].cod/x/y/desc/siu` | Coordenadas individuais |
+| `V3/buscarPrevisoes/{parada}/false/0/MPA/retornoJSON` | parada municipal confirmada | `previsoes[].sgLin/codItinerario`, outros atributos privados | Descobrir somente relações de itinerário; não publicar a resposta bruta |
+| `V3/buscarItinerario/{itinerário}/0/MPA/retornoJSONItinerario` | ID observado em previsão | `itinerarios[].coordX/coordY`, ordem de vértices | GeoJSON de referência; sem interpolar itinerários ausentes |
+
+A frequência de mudança do cadastro não foi acordada com o fornecedor. TTL do cache é política local, não frequência garantida da fonte. HTTP 200 com JSONP sem sucesso é rejeitado. Vínculos, vigência e sentidos exigem homologação operacional.

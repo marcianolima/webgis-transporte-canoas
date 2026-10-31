@@ -237,3 +237,93 @@ def test_publication_preserves_itinerary_missing_from_next_sample(
     with pytest.raises(ValueError, match="vazia"):
         publication.publish(tmp_path)
     assert before == json.loads(active.read_text())["features"][0]
+
+
+def test_partial_stop_refresh_preserves_links_and_directions():
+    import copy
+    from transporte.publish_geography import merge_features
+
+    old = {
+        "geometry": {"type": "Point", "coordinates": [-51.19, -29.9]},
+        "properties": {
+            "stop_id": "SYNTHETIC",
+            "route_ids": ["1", "2"],
+            "directions_by_route": {"1": ["A"]},
+            "fetched_at": "2026-10-31T10:00:00+00:00",
+        },
+    }
+    new = copy.deepcopy(old)
+    new["properties"].update(
+        route_ids=["2", "3"],
+        directions_by_route={"2": ["B"]},
+        fetched_at="2026-10-31T11:00:00+00:00",
+    )
+    result = merge_features([old], [new], "stop_id")[0]["properties"]
+    assert result["route_ids"] == ["1", "2", "3"]
+    assert result["directions_by_route"] == {"1": ["A"], "2": ["B"]}
+    assert old["properties"]["route_ids"] == ["1", "2"]
+    new["geometry"]["coordinates"][0] -= 0.1
+    with pytest.raises(ValueError, match="coordenada alterada"):
+        merge_features([old], [new], "stop_id")
+
+
+def test_build_failure_leaves_all_public_files_untouched(tmp_path, monkeypatch):
+    from transporte import publish_geography as publication
+
+    data = fixture(tmp_path)
+    collect(tmp_path, reader=FakeReader(), geo_samples=1, prediction_samples=1)
+    before = {p.name: p.read_bytes() for p in data.iterdir()}
+    monkeypatch.setattr(publication, "prepare", lambda _: None)
+
+    def fail(root):
+        (root / "public/data/transporte-canoas.pmtiles").write_bytes(
+            b"SYNTHETIC partial"
+        )
+        raise OSError("SYNTHETIC build failure")
+
+    monkeypatch.setattr(publication, "build_pmtiles", fail)
+    with pytest.raises(OSError, match="build failure"):
+        publication.publish(tmp_path)
+    assert before == {p.name: p.read_bytes() for p in data.iterdir()}
+
+
+def test_promotion_failure_restores_previous_files(tmp_path, monkeypatch):
+    from transporte import publish_geography as publication
+
+    data = fixture(tmp_path)
+    collect(tmp_path, reader=FakeReader(), geo_samples=1, prediction_samples=1)
+    before = {p.name: p.read_bytes() for p in data.iterdir()}
+    monkeypatch.setattr(publication, "prepare", lambda _: None)
+    monkeypatch.setattr(publication, "build_pmtiles", lambda _: None)
+    real_write = publication.atomic_bytes
+    count = 0
+
+    def fail_second_public_write(path, content):
+        nonlocal count
+        if path.parent == data:
+            count += 1
+            if count == 2:
+                raise OSError("SYNTHETIC promotion failure")
+        real_write(path, content)
+
+    monkeypatch.setattr(publication, "atomic_bytes", fail_second_public_write)
+    with pytest.raises(OSError, match="promotion failure"):
+        publication.publish(tmp_path)
+    assert before == {p.name: p.read_bytes() for p in data.iterdir()}
+    journal = next((tmp_path / "var/gobus/publication-runs").glob("*/journal.json"))
+    assert json.loads(journal.read_text())["status"] == "rolled_back"
+
+
+def test_incomplete_capture_never_replaces_publication(tmp_path, monkeypatch):
+    from transporte import publish_geography as publication
+
+    data = fixture(tmp_path)
+    collect(tmp_path, reader=FakeReader(), geo_samples=1, prediction_samples=1)
+    before = {p.name: p.read_bytes() for p in data.iterdir()}
+    path = tmp_path / "var/gobus/geography/stops.geojson"
+    value = json.loads(path.read_text())
+    value["generated_at"] = "SYNTHETIC interrupted generation"
+    path.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match="incompleta"):
+        publication.publish(tmp_path)
+    assert before == {p.name: p.read_bytes() for p in data.iterdir()}

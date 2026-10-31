@@ -1,5 +1,8 @@
 # Integração autorizada GoBus/TACOM — homologação
 
+**Revisão atual 0.3.1:** 57 itinerários de 36 linhas e 385 paradas; retomada sem perda dos registros anteriores. Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md). Os números da 0.3.0 abaixo são históricos.
+
+
 **Atualização 31/10/2026 / 0.3.0:** geometrias de referência publicadas: 52 itinerários de 35 linhas e 215 paradas. O serviço de coordenadas por linha devolveu Viamão no acesso testado e foi excluído; o novo fluxo usa listas de IDs, consultas de parada individual/proximidade e itinerários observados em previsões municipais. Ver [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). As seções seguintes preservam o diagnóstico anterior; dados agora publicados continuam sem homologação operacional.
 
 

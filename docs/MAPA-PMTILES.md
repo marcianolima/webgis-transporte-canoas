@@ -1,5 +1,8 @@
 # Mapa, PMTiles e importação de trajetos
 
+**Revisão atual 0.3.1:** 57 itinerários de 36 linhas e 385 paradas; retomada sem perda dos registros anteriores. Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md). Os números da 0.3.0 abaixo são históricos.
+
+
 **Atualização 0.3.0:** arquivo com 52 itinerários de 35 linhas e 215 paradas de referência TACOM, 28 tiles, 479.399 bytes. Coleta, vínculos, revisão territorial e limitações em [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). O diagnóstico 0/81 abaixo pertence à revisão anterior.
 
 ## Revisão 0.2.0

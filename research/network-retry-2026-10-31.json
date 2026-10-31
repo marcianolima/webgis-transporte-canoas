@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "recorded_at": "2026-10-31T12:01:33.367874+00:00",
+  "version": "0.3.1",
+  "baseline_commit": "b12c62fd94fb983453dfc28bbba5e29f63d4a8b2",
+  "source_probe": {
+    "status": 200,
+    "elapsed_seconds": 4.92,
+    "timeout_seconds": 60,
+    "source_url": "http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/V3/cidadesLinhas/MPA/retornoJSONCidadesLinhas",
+    "sha256": "77945172ca409d38a236fb99b3fe54ff7943ca4018dcf43d6d16ab759eb8b11c",
+    "fetched_at": "2026-10-31T11:50:32.318097+00:00",
+    "canoas_city_id": "4",
+    "published_data_changed": false
+  },
+  "collection": {
+    "run_id": "20261031T115305-a0f1ba60",
+    "started_at": "2026-10-31T11:53:05.619354+00:00",
+    "updated_at": "2026-10-31T11:56:16.192353+00:00",
+    "status": "completed",
+    "http_requests": 77,
+    "request_limit": 180,
+    "cache_hits": 114,
+    "retry_attempts": 0,
+    "successful_responses": 77,
+    "failed_resources": 0,
+    "timeout_seconds": 60.0,
+    "retries_per_resource": 2,
+    "stop_reason": null,
+    "last_resource": null
+  },
+  "preservation": {
+    "checkpoint_files": 212,
+    "checkpoint_bytes": 7252404,
+    "previous_shape_ids_preserved": 52,
+    "previous_stop_ids_preserved": 215,
+    "previous_stop_route_links_preserved": 602,
+    "all_previous_ids_and_links_preserved": true
+  },
+  "published": {
+    "itineraries": 57,
+    "routes_with_geometry": 36,
+    "stops": 385,
+    "border_review_itineraries": 8,
+    "pmtiles_bytes": 541915,
+    "pmtiles_sha256": "839b79cea602df391b3f96246680b8b7ced7a9310916d857edb30224711d4df3"
+  },
+  "validation": {
+    "python_passed": 123,
+    "typescript_react_passed": 25,
+    "lint": "passed",
+    "build": "passed",
+    "public_data_validation": "passed"
+  },
+  "scope": "Referência estática parcial da API; GPS/ETA contínuos não homologados; capturas brutas privadas."
+}

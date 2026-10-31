@@ -6,21 +6,15 @@ Coordenadas por linha não são utilizadas: o endpoint retornou dados de Viamão
 
 from __future__ import annotations
 import argparse
-from collections import Counter, defaultdict
+from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timezone
-import hashlib
+from datetime import datetime
 import json
 from pathlib import Path
-import threading
-import time
-import urllib.error
-import urllib.request
 from zoneinfo import ZoneInfo
-from shapely import make_valid
 from shapely.geometry import Point, shape
-from shapely.ops import transform, unary_union
-from .collect import dump
+from shapely.ops import transform
+from .persistence import atomic_json as dump
 from .geo import PROJECT, MunicipalReferenceArea as LocalArea
 from .gobus import (
     line_cities,
@@ -28,100 +22,13 @@ from .gobus import (
     stops,
     predictions,
     itinerary,
-    request_path,
-    payload,
 )
 from .gobus_crosswalk import normalized
 from .http import utcnow
 
-BASE = "http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/"
-METHOD = "gobus-geography-0.3.0"
+from .gobus_reader import BASE, Reader
 
-
-class NoRedirect(urllib.request.HTTPRedirectHandler):
-    def redirect_request(self, *args, **kwargs):
-        raise ValueError("Redirecionamento não permitido")
-
-
-class Reader:
-    def __init__(self, folder, interval=2, max_requests=180):
-        self.folder = Path(folder)
-        self.folder.mkdir(parents=True, exist_ok=True)
-        self.interval = max(1.5, interval)
-        self.maximum = min(300, max_requests)
-        self.count = 0
-        self.last = 0.0
-        self.lock = threading.Lock()
-        self.denied = False
-        self.records = []
-
-    def archive(self, item):
-        history = self.folder.parent / "source-history"
-        history.mkdir(parents=True, exist_ok=True)
-        identity = hashlib.sha256(
-            (item["url"] + item["fetched_at"] + item["sha256"]).encode()
-        ).hexdigest()
-        target = history / (identity + ".json")
-        if not target.exists():
-            dump(target, item)
-
-    def get(self, kind, **params):
-        url = BASE + request_path(kind, **params)
-        key = hashlib.sha256(url.encode()).hexdigest()
-        path = self.folder / (key + ".json")
-        ttl = 300 if kind == "previsoes" else 86400
-        if path.exists():
-            cached = json.loads(path.read_text())
-            self.archive(cached)
-            if (
-                time.time() - datetime.fromisoformat(cached["fetched_at"]).timestamp()
-                < ttl
-            ):
-                return payload(cached["body"]), {
-                    k: v for k, v in cached.items() if k != "body"
-                }
-        with self.lock:
-            if self.denied:
-                raise ValueError("Fonte negou acesso; coleta interrompida")
-            if self.count >= self.maximum:
-                raise ValueError("Orçamento de requisições atingido")
-            time.sleep(max(0, self.interval - (time.monotonic() - self.last)))
-            self.last = time.monotonic()
-            self.count += 1
-        opener = urllib.request.build_opener(NoRedirect)
-        try:
-            request = urllib.request.Request(
-                url,
-                headers={
-                    "User-Agent": "GeoCanoasTransporte-AuthorizedResearch/0.3",
-                    "Accept": "application/javascript,application/json,text/plain",
-                },
-            )
-            with opener.open(request, timeout=25) as response:
-                raw = response.read(5_000_001)
-                if len(raw) > 5_000_000:
-                    raise ValueError("Resposta acima de 5 MB")
-                if response.status != 200:
-                    raise ValueError("HTTP diferente de 200")
-            body = raw.decode("utf-8-sig")
-            document = payload(body)
-            item = {
-                "url": url,
-                "fetched_at": utcnow(),
-                "sha256": hashlib.sha256(raw).hexdigest(),
-                "kind": kind,
-                "params": params,
-                "body": body,
-            }
-            self.archive(item)
-            dump(path, item)
-            with self.lock:
-                self.records.append({k: v for k, v in item.items() if k != "body"})
-            return document, {k: v for k, v in item.items() if k != "body"}
-        except urllib.error.HTTPError as error:
-            if error.code in (401, 403):
-                self.denied = True
-            raise
+METHOD = "gobus-geography-0.3.1"
 
 
 def collect(
@@ -487,6 +394,10 @@ def collect(
         "forecast_samples": len(sampled),
         "observed_itinerary_relations": len(relationships),
         "http_requests": reader.count,
+        "cache_hits": getattr(reader, "cache_hits", 0),
+        "retry_attempts": getattr(reader, "retry_attempts", 0),
+        "request_timeout_seconds": getattr(reader, "timeout", None),
+        "collection_run_id": getattr(reader, "run_id", None),
         "conflicting_stops": sorted(conflicts),
         "border_review_itineraries": sum(
             f["properties"]["territorial_quality"] == "border_review" for f in routes
@@ -564,6 +475,18 @@ def main():
     cli.add_argument("--geo-samples", type=int, default=18)
     cli.add_argument("--prediction-samples", type=int, default=10)
     cli.add_argument("--interval", type=float, default=2)
+    cli.add_argument(
+        "--timeout",
+        type=float,
+        default=60,
+        help="Timeout de cada requisição: 10–90 segundos",
+    )
+    cli.add_argument(
+        "--retries",
+        type=int,
+        default=2,
+        help="Novas tentativas por falha transitória: 0–2",
+    )
     cli.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[2])
     args = cli.parse_args()
     if not args.authorized or not args.allow_plain_http:
@@ -573,15 +496,24 @@ def main():
             datetime.now(ZoneInfo("America/Sao_Paulo")).date().isoformat()
         )
     reader = Reader(
-        args.root / "var/gobus/reference-cache", args.interval, args.max_requests
+        args.root / "var/gobus/reference-cache",
+        args.interval,
+        args.max_requests,
+        timeout=args.timeout,
+        retries=args.retries,
     )
-    collect(
-        args.root,
-        reader=reader,
-        service_date=args.service_date,
-        geo_samples=min(args.geo_samples, 40),
-        prediction_samples=min(args.prediction_samples, 20),
-    )
+    try:
+        result = collect(
+            args.root,
+            reader=reader,
+            service_date=args.service_date,
+            geo_samples=min(args.geo_samples, 40),
+            prediction_samples=min(args.prediction_samples, 20),
+        )
+        reader.finish("partial" if result["errors"] else "completed")
+    except BaseException:
+        reader.finish("interrupted_or_failed")
+        raise
 
 
 if __name__ == "__main__":
