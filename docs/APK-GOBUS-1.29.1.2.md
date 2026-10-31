@@ -10,10 +10,10 @@ Análise realizada em 30/10/2026 do arquivo fornecido pelo operador da conversa,
 - O aplicativo inclui `json.js`, `mapa.js`, `previsao.js`, `sublinhasDaLinha.js`, HTML das telas e bibliotecas Leaflet/jQuery. A camada de mapas usada no APK é **Leaflet**, não PMTiles. O projeto municipal mantém PMTiles no frontend próprio.
 - URL principal explicitamente atribuída em `assets/www/js/json.js` linha 17:
   `http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/`.
-  Comentário de desenvolvedor: Porto Alegre. **Host/endereço configurado no pacote, não disponibilidade de serviço comprovada.**
+  Comentário de desenvolvedor: Porto Alegre. **Host/endereço configurado no pacote e posteriormente confirmado respondendo a endpoints de leitura nos runners do GitHub Actions.**
 - Requisições `$.ajax` são GET, `dataType:'jsonp'`, timeout 45 s; o callback costuma ser o último segmento do caminho. Ao construir JSONP, o jQuery pode acrescentar parâmetro query de callback: teste real é necessário antes de implementar cliente de produção.
 - `ccUsr` passa a ser `0` pela função `pegaCodUsr()`, mas isso **não equivale a autorização pública formal**.
-- `pracaApp=GOBUS` (identidade da versão do app) **não é o mesmo parâmetro** que `siuMobileCidade`. O estilo cita `CAN`, mas o código busca cidades por `cidadesApp`; a sigla efetiva tem de ser confirmada na resposta e não deve ser imposta por hipótese.
+- `pracaApp=GOBUS` (identidade da versão do app) **não é o mesmo parâmetro** que `siuMobileCidade`. O estilo cita `CAN`, porém o host principal responde sob a praça `MPA`; o serviço `V3/cidadesLinhas/MPA` confirmou **Canoas como `codcid=4`**. `cidadesApp` retornou lista vazia nessa origem. O identificador `codcid` deve ser validado e utilizado para filtrar o cadastro geral.
 - O APK não contém um banco completo de itinerários ou GPS. `assets/www/praca/GOBUS/linhas.txt` guarda um **recorte local de 19 variantes metropolitanas TM1/TM2/TM3 (M101/M102/M103)**, não uma base municipal atual e não georreferenciada.
 
 ## Catálogo de recursos identificados diretamente no código
@@ -57,11 +57,11 @@ O código também contém consultas envolvendo cartão PNE e operações como `e
 ## Validação, segurança e implantação
 
 1. **Análise estática concluída:** parâmetros, caminhos e formato esperado foram observados diretamente no APK e documentados. Scripts PHP/Python externos e comportamento dos servidores não foram analisados.
-2. **Teste online não concluído:** tentativa única de resolução `mpa.siumobile.com.br` no ambiente de análise retornou `Could not resolve host`; o acesso externo do ambiente não confirmou HTTP nem retorno municipal. Isso **não prova** que o servidor esteja desligado.
-3. **Nenhum dado GPS/parada/itinerário de produção foi recuperado nesta etapa.** Não transformar hipótese em mapa publicado.
+2. **Testes de leitura online concluídos para catálogo, paradas e previsões:** runners autorizados do GitHub Actions receberam respostas JSONP do host MPA. `cidadesApp` retornou lista vazia; `buscarLinhas` apresentou **1.070 linhas** da praça MPA, em **14 `codcid` distintos**; `V3/cidadesLinhas/MPA` confirmou `CANOAS=4`. Filtrando `codcid=4`, foram identificados **204 registros TACOM**; 72 com códigos coincidentes candidatos aos 81 IDs distintos do NGS. Essas coincidências exigem revisão de sentidos e variantes.
+3. **Amostra geográfica real:** para linha `05006`, `V3/buscarParadasPorLinhaComCoordenadas` retornou **64 paradas com coordenadas locais**; a consulta pontual `buscarPrevisoes` retornou sete previsões, nenhuma com vínculo confirmado de itinerário à linha testada. **Nenhum GPS ou itinerário linear completo foi publicado**; os dados reais obtidos nesses testes não foram inseridos na cartografia pública, que continua pendente de homologação.
 4. Há um risco de integridade/confidencialidade porque a base do APK é **HTTP**, não HTTPS. Para produção, exigir canal seguro, termos de uso e autorização de redistribuição/consulta com TACOM/operadora. Nunca embutir tokens, dados PNE, cartões ou GPS bruto em GitHub Pages.
 5. O projeto passa a ter `pipeline/transporte/gobus.py`, que permite montar **somente caminhos de leitura**, analisar JSONP sem executá-lo, validar coordenadas e gerar GeoJSON de itinerários **marcado não homologado**. Há testes offline em `tests/test_gobus.py`. O worker GPS existente continua corretamente bloqueado até `SOURCE_HOMOLOGATED=true` e um feed HTTPS autorizado.
-6. Para liberar a integração: confirmar `cidadesApp`, consultar apenas exemplos de linhas/itinerário/paradas autorizados, verificar município e situação operacional, documentar correspondência SIU↔NGS, coletar amostra autorizada de posições, confirmar timestamp e limites, implantar proxy/API segura e só então produzir PMTiles reais.
+6. Para liberar a integração: usar a relação confirmada `MPA/codcid=4` como filtro, validar correspondência SIU↔NGS e itinerários/sentidos, acordar direitos de publicação e coleta, obter os trajetos reais com vigência, confirmar timestamp GPS e limites, implantar proxy/API segura e só então produzir PMTiles reais. Ver [homologação GoBus](GOBUS-HOMOLOGACAO.md).
 
 **Limite decisivo:** descobrir a API do aplicativo **não é o mesmo que ter os dados operacionais**. O aplicativo 1.29.1.2 é anterior à versão 1.31.3 observada na loja; requer validação de eventuais alterações de backend.
 
