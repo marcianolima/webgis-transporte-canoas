@@ -41,7 +41,8 @@ import {
   loadData,
   number,
 } from "./data";
-import type { AppData, Departure, Vehicles } from "./types";
+import type { AppData, Departure } from "./types";
+import { useVehicles } from "./hooks/useVehicles";
 import StopCoverage from "./components/StopCoverage";
 const TransportMap = lazy(() => import("./components/TransportMap"));
 const StopsPage = lazy(() => import("./components/StopsPage"));
@@ -326,43 +327,9 @@ function App() {
     const timer = setInterval(() => setClock(Date.now()), 15000);
     return () => clearInterval(timer);
   }, []);
-  useEffect(() => {
-    const api = import.meta.env.VITE_PUBLIC_API_BASE;
-    if (!api) return;
-    let stopped = false;
-    const update = async () => {
-      try {
-        const r = await fetch(api.replace(/\/$/, "") + "/v1/vehicles", {
-          signal: AbortSignal.timeout(10000),
-        });
-        if (!r.ok) throw new Error("API indisponível");
-        const v = (await r.json()) as Vehicles;
-        if (!Array.isArray(v.vehicles)) throw new Error("Contrato inválido");
-        if (!stopped) setData((d) => (d ? { ...d, vehicles: v } : d));
-      } catch {
-        if (!stopped)
-          setData((d) =>
-            d
-              ? {
-                  ...d,
-                  vehicles: {
-                    ...d.vehicles,
-                    status: "unavailable",
-                    message:
-                      "Falha de atualização da API. Posições antigas expiram em 3 minutos.",
-                  },
-                }
-              : d,
-          );
-      }
-    };
-    update();
-    const timer = setInterval(update, 60_000);
-    return () => {
-      stopped = true;
-      clearInterval(timer);
-    };
-  }, []);
+  useVehicles(import.meta.env.VITE_PUBLIC_API_BASE, data !== null, (value) => {
+    setData((current) => current ? { ...current, vehicles: value } : current);
+  });
   const active = pages.find((p) => p.id === page) || pages[0];
   const routes = useMemo(
     () => data?.network.routes.filter((r) => r.dates.includes(date)) || [],
@@ -539,7 +506,7 @@ function App() {
                   <WifiOff size={14} />
                   {live.length
                     ? number(live.length) + " veículos recentes"
-                    : data.vehicles.status === "available"
+                    : ["available", "reference"].includes(data.vehicles.status)
                       ? "Sem posições recentes"
                       : "GPS não homologado"}
                   <ArrowRight size={13} />
@@ -638,7 +605,7 @@ function App() {
                     <Card
                       title="Veículos com GPS recente"
                       value={
-                        data.vehicles.status === "available"
+                        ["available", "reference"].includes(data.vehicles.status)
                           ? number(live.length)
                           : "Não disponível"
                       }
@@ -980,17 +947,17 @@ function App() {
                     <Card
                       title="Posições recentes"
                       value={
-                        data.vehicles.status === "available"
+                        ["available", "reference"].includes(data.vehicles.status)
                           ? number(live.length)
                           : "Não disponível"
                       }
-                      description="Até 3 minutos desde a observação"
+                      description="Até 3 minutos desde a consulta, não do GPS original"
                       icon={Radio}
                     />
                     <Card
                       title="Linhas observadas"
                       value={
-                        data.vehicles.status === "available"
+                        ["available", "reference"].includes(data.vehicles.status)
                           ? number(new Set(live.map((v) => v.route_id)).size)
                           : "Não disponível"
                       }
@@ -998,7 +965,7 @@ function App() {
                       icon={BusFront}
                     />
                     <Card
-                      title="Última coleta GPS"
+                      title="Última consulta da posição"
                       value={
                         data.vehicles.generated_at
                           ? brDate(data.vehicles.generated_at, true)
@@ -1016,8 +983,16 @@ function App() {
                   </div>
                   <Panel
                     title="Monitoramento da frota"
-                    subtitle="Somente posições efetivamente observadas"
+                    subtitle="Coordenadas reais consultadas, sem interpolação ou simulação"
                   >
+                    {data.vehicles.status === "reference" && (
+                      <p className="notice warning" role="note">
+                        Posição obtida em consulta à TACOM, sem timestamp original de GPS.
+                        Itinerários/linhas são referências ainda não homologadas.
+                        SC significa sem comunicação e SG, sem GPS. Um ícone parado
+                        não comprova ônibus imobilizado.
+                      </p>
+                    )}
                     <div className="search">
                       <Search size={17} />
                       <input
@@ -1034,7 +1009,9 @@ function App() {
                             <tr>
                               <th>Veículo</th>
                               <th>Linha</th>
-                              <th>Posição observada</th>
+                              <th>Última consulta</th>
+                              <th>Idade da consulta</th>
+                              <th>Sinal</th>
                               <th>Velocidade</th>
                             </tr>
                           </thead>
@@ -1049,7 +1026,9 @@ function App() {
                                 <tr key={v.source_id + v.vehicle_id}>
                                   <td>{v.vehicle_id}</td>
                                   <td>{v.route_id}</td>
-                                  <td>{brDate(v.observed_at, true)}</td>
+                                  <td>{brDate(v.fetched_at, true)}</td>
+                                  <td>{Math.max(0, Math.floor((clock - Date.parse(v.fetched_at))/1000))} s</td>
+                                  <td>{v.signal_status === "SC" ? "Sem comunicação" : v.signal_status === "SG" ? "Sem GPS" : "Recebido"}</td>
                                   <td>
                                     {number(v.speed_kmh, 1)}{" "}
                                     {v.speed_kmh != null ? "km/h" : ""}
