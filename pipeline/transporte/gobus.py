@@ -12,6 +12,7 @@ from .parsing import legacy_rows, parse_jsonp
 PATHS = {
     'cidades': ('cidadesApp/retornoJSONCidades', ()),
     'linhas': ('buscarLinhas/retornoJSONListaLinhas', ()),
+    'cidades_linhas': ('V3/cidadesLinhas/{cidade}/retornoJSONCidadesLinhas', ('cidade',)),
     'sublinhas': ('V3/retornaSublinhasDaLinha/{linha}/0/{cidade}/retornoSublinhasJSON', ('linha', 'cidade')),
     'paradas_linha': ('V3/buscarParadasPorLinha/{linha}/0/{cidade}/retornoJSON', ('linha', 'cidade')),
     'paradas_geograficas': ('V3/buscarParadasPorLinhaComCoordenadas/{linha}/0/{cidade}/retornoJSONH', ('linha', 'cidade')),
@@ -141,4 +142,16 @@ def cities(raw: str) -> list[dict[str, str]]:
         code = str(row.get('sg', '')).strip().upper()
         if code and row.get('desc'):
             result.append({'code': code, 'name': str(row['desc']).strip()})
+    return result
+
+def line_cities(raw: str) -> list[dict[str, str]]:
+    """Relaciona codcid ao nome municipal informado por V3/cidadesLinhas."""
+    source = payload(raw).get('cidade')
+    values = legacy_rows(source)
+    result = []
+    for row in values:
+        code = str(row.get('cod', '')).strip()
+        name = str(row.get('desc', '')).strip()
+        if code.isdecimal() and name:
+            result.append({'city_id': code, 'name': name})
     return result
