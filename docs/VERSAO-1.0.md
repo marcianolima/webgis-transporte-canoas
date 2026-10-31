@@ -12,13 +12,13 @@ A versão 0.4.0 publica **57 itinerários de 36 linhas e 1.410 paradas TACOM**, 
 | Paradas | 1.410 de 1.433 IDs com posição publicada; 23 fora da referência, em revisão | Revisar 23 posições; conciliar as nove linhas sem lista correspondente; obter cadastro vigente completo e homologar sequência/atendimento |
 | Retomada da coleta | Cache/histórico, timeout, retry, progresso e publicação isolada testados | Disco privado persistente para conservar capturas entre runners |
 | Engenharia reversa | APK e contratos mapeados; problema do serviço de coordenadas por linha isolado | Acordar contrato estável e canal seguro de produção com fornecedor |
-| GPS e ETA público | Não publicados como monitoramento atual | Timestamp de medição embarcada, limites, adaptador real e infraestrutura persistente |
+| GPS e ETA público | Adaptador TACOM de consulta controlada, persistência, API e visualização preparados; **não ativados** em produção | Amostra de posição real verificada, canal seguro, limites e permissão de divulgação; timestamp embarcado ainda indisponível |
 | Histórico e backend | Código, SQLite e modelo PostgreSQL/PostGIS preparados | Hospedagem, TLS, backups e recuperação testada em produção |
 | Gestão restrita | Painel privado com chave técnica | Autenticação nominal municipal, perfis e homologação de acesso |
 | Indicadores de programação | Calculados com dados reais | Conferência por data/sentido; não representam viagens realizadas |
-| Auditoria operacional | Regras unitárias testadas, sem ocorrências inventadas | GPS temporal confiável, associação de viagens, critérios contratuais e revisão humana |
+| Auditoria operacional | Regras `audit-0.2.0` distinguem `client_fetch`, classificam eventos temporais como inconclusivos | GPS temporal confiável, associação de viagens, critérios contratuais e revisão humana |
 | Análise territorial | Área, população, paradas, buffers e extensão da amostra | Cobertura completa, equipamentos e rede de pedestres para acessibilidade |
 | Relatórios | CSV/JSON/GeoJSON e impressão do navegador | Homologar dispositivos e relatórios fiscais com evidências reais |
 | Acessibilidade e aceite | QA desktop e viewport móvel; sem auditoria WCAG integral | Teclado, leitor de tela, contraste, usuários de campo e aceite municipal |
 
-Prioridades seguintes: ampliar coordenadas de paradas e variantes com capturas limitadas; conciliar códigos/sentidos/vigência com o fornecedor; confirmar timestamp e contrato GPS; implantar backend; homologar indicadores com a fiscalização. Nenhuma ausência de GPS ou de previsão comprova cancelamento, viagem não realizada ou infração.
+Prioridades seguintes: validar a integração privada `gobus_live.py` e as relações de itinerários ativos sem divulgar posições; confirmar canal seguro, orçamento e autorização de redistribuição; depois ampliar coordenadas de paradas e variantes com capturas limitadas; conciliar códigos/sentidos/vigência com o fornecedor; confirmar timestamp e contrato GPS; implantar backend; homologar indicadores com a fiscalização. Nenhuma ausência de GPS ou de previsão comprova cancelamento, viagem não realizada ou infração.
