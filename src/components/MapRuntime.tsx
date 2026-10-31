@@ -183,7 +183,7 @@ export default function MapRuntime(props: RuntimeProps) {
       L.popup().setLatLng(event.latlng).setContent(node).openOn(m);
       if (p.BAIRRO) current.onArea(p.BAIRRO);
     });
-    const markers = new Map<string, L.CircleMarker>();
+    const markers = new Map<string, L.Marker>();
     const update = () => {
       const values = currentVehicles(state.current.data.vehicles.vehicles);
       const keys = new Set(values.map((v) => v.source_id + ":" + v.vehicle_id));
@@ -194,23 +194,32 @@ export default function MapRuntime(props: RuntimeProps) {
         }
       for (const v of values) {
         const id = v.source_id + ":" + v.vehicle_id;
+        const status = v.signal_status ?? "ok";
+        const signalText = status === "SC" ? "sem comunicação" :
+          status === "SG" ? "sem GPS" : "sinal recebido";
+        const age = Math.max(0, Math.floor((Date.now() - Date.parse(v.fetched_at)) / 1000));
+        const core = document.createElement("span");
+        core.className = "vehicle-marker-core" +
+          (status === "SC" ? " vehicle-marker-sc" : status === "SG" ? " vehicle-marker-sg" : "");
+        core.textContent = status === "ok" && v.bearing != null ? "▲" : "●";
+        if (status === "ok" && v.bearing != null) core.style.transform = `rotate(${v.bearing}deg)`;
+        core.setAttribute("aria-label", `Veículo ${v.vehicle_id}, sinal ${signalText}`);
+        const icon = L.divIcon({
+          className: "vehicle-marker", html: core, iconSize: [28,28], iconAnchor: [14,14],
+        });
+        const info = document.createElement("div");
+        info.textContent =
+          `Veículo ${v.vehicle_id} · linha de referência ${v.route_id} · consulta ${brDate(v.fetched_at,true)} (há ${age} s) · ${signalText}.` +
+          (v.time_basis === "client_fetch" ? " Sem timestamp original do GPS; itinerário não homologado." : "");
         const existing = markers.get(id);
-        if (existing) existing.setLatLng([v.latitude, v.longitude]);
-        else {
-          const node = document.createElement("div");
-          node.textContent = `Veículo ${v.vehicle_id} · linha ${v.route_id} · ${brDate(v.observed_at, true)}`;
-          markers.set(
-            id,
-            L.circleMarker([v.latitude, v.longitude], {
-              radius: 7,
-              color: "#fff",
-              weight: 2,
-              fillColor: routeColor(v.route_id),
-              fillOpacity: 1,
-            })
-              .bindPopup(node)
-              .addTo(m),
-          );
+        if (existing) {
+          existing.setLatLng([v.latitude, v.longitude]);
+          existing.setIcon(icon);
+          existing.setPopupContent(info);
+        } else {
+          markers.set(id, L.marker([v.latitude, v.longitude], {
+            icon, title: `Veículo ${v.vehicle_id} · ${signalText}`, keyboard: true,
+          }).bindPopup(info).addTo(m));
         }
       }
     };
