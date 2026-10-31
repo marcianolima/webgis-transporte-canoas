@@ -9,21 +9,10 @@ import hashlib
 import json
 import math
 from pathlib import Path
-from .gobus import payload, lines, stops, itinerary
-from .parsing import legacy_rows
+from .gobus import lines, stops, itinerary, cities
 from .geo import valid_coordinate
 
 MUNICIPALITY = '4304606'
-
-def cities(raw: str) -> list[dict]:
-    source = payload(raw).get('cidade')
-    values = legacy_rows(source)
-    result = []
-    for row in values:
-        code = str(row.get('sg', '')).strip().upper()
-        if code and row.get('desc'):
-            result.append({'code': code, 'name': str(row['desc']).strip()})
-    return result
 
 def _read(root: Path, name: str) -> tuple[str, str]:
     """Limita leitura ao diretório privado de capturas, sem path traversal."""
