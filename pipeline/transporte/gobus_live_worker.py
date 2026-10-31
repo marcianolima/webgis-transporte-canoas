@@ -29,16 +29,18 @@ def stop(*_):
 
 def load_sources(root):
     path=Path(root)/"public/data"
-    files=("stop-inventory.json","route-shapes.geojson","bairros-oficiais.geojson")
+    files=("stop-inventory.json","route-shapes.geojson","bairros-oficiais.geojson","stops.geojson")
     return tuple(json.loads((path/file).read_text(encoding="utf-8")) for file in files)
 
 
-def ingest(store, collector, inventory, shapes, area):
+def ingest(store, collector, inventory, shapes, area, stop_geometries=None):
     run={"id":str(uuid.uuid4()),"started_at":utcnow(),"status":"running",
          "accepted":0,"rejected":0}
     store.save_run(run)
     try:
-        result=collector.once(inventory,shapes,area)
+        result=(collector.once(inventory,shapes,area,
+                 stop_geometries=stop_geometries) if stop_geometries is not None
+                 else collector.once(inventory,shapes,area))
         normalized=[]
         for row in result["vehicles"]:
             try:
@@ -70,22 +72,29 @@ def main():
     private.mkdir(parents=True,exist_ok=True)
     state_path=private/"live-state.json"
     state=json.loads(state_path.read_text()) if state_path.is_file() else {}
-    inventory,shapes,area=load_sources(root)
+    inventory,shapes,area,stop_geometries=load_sources(root)
     store=Store()
     store.initialize()
     signal.signal(signal.SIGTERM,stop)
     signal.signal(signal.SIGINT,stop)
     cache={}
+    max_per_hour=int(os.getenv("GOBUS_MAX_PER_HOUR","120"))
+    max_per_day=int(os.getenv("GOBUS_MAX_PER_DAY","1000"))
     with httpx.Client(follow_redirects=False,trust_env=False) as client:
         while not STOP:
-            collector=LiveCollector(client,state=state,cache=cache,spacing=spacing,max_requests=16)
-            run,report=ingest(store,collector,inventory,shapes,area)
+            collector=LiveCollector(client,state=state,cache=cache,spacing=spacing,
+                                    max_requests=16,max_per_hour=max_per_hour,
+                                    max_per_day=max_per_day)
+            run,report=ingest(store,collector,inventory,shapes,area,stop_geometries)
             state=collector.state
             atomic_json(state_path,state)
             print(json.dumps({"event":"gobus_live_cycle","status":run["status"],
                 "accepted":run["accepted"],"rejected":run["rejected"],
                 "requests":collector.requests,"access_denied":collector.denied}),flush=True)
             if collector.denied:
+                break
+            if collector.throttled or collector.exhausted:
+                # Conservador: não insistir em caso de 429/orçamento encerrado.
                 break
             for _ in range(interval):
                 if STOP:break
