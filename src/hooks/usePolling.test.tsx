@@ -34,6 +34,7 @@ describe("usePolling", () => {
       expect(task).toHaveBeenCalledTimes(2);
     } finally {
       if (old) Object.defineProperty(document, "hidden", old);
+      else Reflect.deleteProperty(document, "hidden");
     }
   });
 });
