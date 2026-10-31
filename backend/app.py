@@ -7,7 +7,10 @@ import secrets
 import uuid
 from datetime import datetime,timezone,timedelta
 from pathlib import Path
-from fastapi import FastAPI, Depends, Header, HTTPException, Query
+from collections import defaultdict, deque
+from threading import Lock
+import time
+from fastapi import FastAPI, Depends, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -19,6 +22,8 @@ from transporte.audit import timestamp
 def create_app(store=None):
     app=FastAPI(title='Transporte Canoas · API operacional',version='0.1.0',docs_url=None,redoc_url=None,openapi_url=None)
     db=store or Store();db.initialize()
+    request_times = defaultdict(deque)
+    request_lock = Lock()
     origins=[v.strip() for v in os.getenv('PUBLIC_ORIGINS','https://marcianolima.github.io').split(',') if v.strip()]
     app.add_middleware(CORSMiddleware,allow_origins=origins,allow_methods=['GET'],allow_headers=[],allow_credentials=False)
 
@@ -61,16 +66,43 @@ def create_app(store=None):
             row=connection.execute('SELECT ended_at,status FROM collection_run ORDER BY started_at DESC LIMIT 1').fetchone()
         return {'status':row['status'] if row else 'not_configured','last_run_at':row['ended_at'] if row else None,'time':utcnow()}
 
+    def vehicle_limit(request):
+        # Defesa em profundidade; proxy Nginx aplica a limitação distribuída.
+        # Somente endereço de conexão, nunca X-Forwarded-For arbitrário.
+        identity = request.client.host if request.client else 'unknown'
+        now = time.monotonic()
+        with request_lock:
+            window = request_times[identity]
+            while window and now-window[0] >= 60:
+                window.popleft()
+            if len(window) >= 60:
+                raise HTTPException(429,'Muitas consultas de veículos',headers={'Retry-After':'60'})
+            window.append(now)
+
     @app.get('/v1/vehicles')
-    def vehicles():
+    def vehicles(request: Request, _limit=Depends(vehicle_limit)):
         now=datetime.now(timezone.utc)
         values=db.latest((now-timedelta(minutes=3)).isoformat())
         values=[p for p in values if timestamp(p['observed_at'])<=now+timedelta(seconds=30)]
-        fields=('vehicle_id','route_id','longitude','latitude','observed_at','fetched_at','speed_kmh','bearing','source_id')
-        return {'status':'available' if os.getenv('SOURCE_HOMOLOGATED')=='true' else 'unavailable',
-                'generated_at':max((p['fetched_at'] for p in values),default=None),
-                'vehicles':[{k:p.get(k) for k in fields} for p in values] if os.getenv('SOURCE_HOMOLOGATED')=='true' else [],
-                'message':'Posições observadas; registros acima de 3 minutos são omitidos.'}
+        fields=('vehicle_id','route_id','longitude','latitude','observed_at','fetched_at',
+                'source_observed_at','time_basis','signal_status','stale_polls',
+                'source_itinerary_id','route_relation','bearing_basis',
+                'speed_kmh','bearing','source_id')
+        complete = os.getenv('SOURCE_HOMOLOGATED') == 'true'
+        reference = os.getenv('PUBLIC_POSITIONS_ENABLED') == 'true'
+        status = 'available' if complete else 'reference' if reference else 'unavailable'
+        visible = values if status != 'unavailable' else []
+        return {
+            'status':status,
+            'generated_at':max((p['fetched_at'] for p in visible),default=None),
+            'vehicles':[{k:p.get(k) for k in fields} for p in visible],
+            'message':('Posições por consulta à TACOM, sem timestamp GPS de origem; '
+                       'linhas/itinerários de referência, não homologação operacional.'
+                       if status=='reference' else
+                       'Posições observadas; registros acima de 3 minutos são omitidos.'
+                       if status=='available' else
+                       'Dados operacionais indisponíveis ou publicação não autorizada.')
+        }
 
     @app.get('/internal/positions',dependencies=[Depends(authorized)])
     def history(start:str,end:str,vehicle:str|None=None,route:str|None=None,limit:int=Query(10000,ge=1,le=50000)):
