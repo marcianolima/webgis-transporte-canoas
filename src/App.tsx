@@ -1559,8 +1559,8 @@ function App() {
                             <td>GoBus, veículos e previsões</td>
                             <td>API operacional de Canoas não homologada</td>
                             <td>
-                              APK legítimo ou documentação/acesso autorizado da
-                              TACOM; validar contratos e limites
+                              APK 1.29.1.2 analisado estaticamente; validar
+                              respostas municipais, autorização e limites
                             </td>
                           </tr>
                           <tr>
