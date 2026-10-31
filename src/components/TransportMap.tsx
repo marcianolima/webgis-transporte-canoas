@@ -248,6 +248,13 @@ export default function TransportMap({
             <span>
               Contorno: união dos bairros; não é limite municipal homologado.
             </span>
+            {["reference", "available"].includes(data.vehicles?.status || "") && (
+              <span>
+                ▲ Ônibus: direção em octantes presumida (0° = Norte, não homologado).
+                Verde: sinal recebido; cinza: SC (sem comunicação); ocre: SG (sem GPS).
+                Posição obtida em consulta, sem timestamp GPS original quando indicada como referência.
+              </span>
+            )}
             {ids.slice(0, 5).map((id) => (
               <span key={id} className="legend-route">
                 <i style={{ background: routeColor(id) }} />
