@@ -9,7 +9,7 @@ import sys
 import time
 import urllib.request
 from urllib.error import HTTPError, URLError
-from transporte.gobus import lines, request_path, cities
+from transporte.gobus import lines, request_path, cities, payload
 
 BASE = 'http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/'
 
