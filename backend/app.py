@@ -141,7 +141,7 @@ def create_app(store=None):
                 'source_itinerary_id','route_relation','bearing_basis',
                 'speed_kmh','bearing','source_id')
         # Nunca declarar telemetria homologada quando faltam timestamps GPS nativos.
-        fully_homologated = complete and all(
+        fully_homologated = complete and bool(values) and all(
             p.get('time_basis', 'source_gps') == 'source_gps' and
             p.get('source_observed_at') for p in values
         )
