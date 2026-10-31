@@ -69,8 +69,28 @@ def create_app(store=None):
     @app.get('/v1/health')
     def health():
         with db.connection() as connection:
-            row=connection.execute('SELECT ended_at,status FROM collection_run ORDER BY started_at DESC LIMIT 1').fetchone()
-        return {'status':row['status'] if row else 'not_configured','last_run_at':row['ended_at'] if row else None,'time':utcnow()}
+            row=db.execute(connection,'SELECT ended_at,status,accepted,rejected,message FROM collection_run ORDER BY started_at DESC LIMIT 1').fetchone()
+        diagnostics={}
+        if row:
+            try:
+                summary=json.loads(row['message'] or '{}')
+                permitted={'sampled_stops','active_itineraries','queried_itineraries',
+                           'requests','cache_hits','failures','access_denied',
+                           'rate_limited','quota_exhausted',
+                           'requests_last_hour','requests_last_day'}
+                if isinstance(summary,dict):
+                    diagnostics={k:v for k,v in summary.items()
+                                 if k in permitted and type(v) in (int,bool)}
+            except (TypeError,ValueError):
+                pass
+        return {
+            'status':row['status'] if row else 'not_configured',
+            'last_run_at':row['ended_at'] if row else None,
+            'accepted_last_run':row['accepted'] if row else 0,
+            'rejected_last_run':row['rejected'] if row else 0,
+            'source_diagnostics':diagnostics, 'time':utcnow(),
+            'limitation':'A ausência de GPS não prova cancelamento nem infração.'
+        }
 
     def vehicle_limit(request: Request):
         # Defesa em profundidade; proxy Nginx aplica a limitação distribuída.
