@@ -1,0 +1,26 @@
+name: GoBus TACOM · identificar Canoas na lista de cidades
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe-citylines.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Testar tabela de cidades vinculadas às linhas
+        env:
+          PYTHONPATH: pipeline:.
+        run: python scripts/gobus_probe_citylines.py --autorizado --aceito-http
+      - name: Escopo da sondagem
+        if: always()
+        run: |
+          echo "Apenas V3/cidadesLinhas com praça MPA/CAN, até duas consultas." >> "$GITHUB_STEP_SUMMARY"
+          echo "Sem GPS, registros de usuários, alarmes ou uso de credenciais." >> "$GITHUB_STEP_SUMMARY"
