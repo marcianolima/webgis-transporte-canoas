@@ -10,7 +10,9 @@ class SyntheticCollector:
     def __init__(self, positions):
         self.positions=positions
     def once(self, *_):
-        return {"status":"reference","vehicles":self.positions}
+        return {"status":"reference","vehicles":self.positions,
+                "diagnostics":{"requests":2,"sampled_stops":1,
+                               "vehicle_id":"PRIVATE-DO-NOT-EXPOSE"}}
 
 
 def position():
@@ -44,6 +46,10 @@ def test_private_worker_to_public_reference_api(tmp_path,monkeypatch):
     assert data["vehicles"][0]["signal_status"]=="SG"
     assert data["vehicles"][0]["stale_polls"]==2
     assert "timestamp GPS" in data["message"]
+    health=TestClient(create_app(store)).get("/v1/health").json()
+    assert health["accepted_last_run"]==1
+    assert health["source_diagnostics"]["requests"]==2
+    assert "PRIVATE-DO-NOT-EXPOSE" not in str(health)
 
 
 def test_worker_rejects_fake_municipal_scope(tmp_path):
