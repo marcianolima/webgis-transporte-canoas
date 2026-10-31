@@ -27,7 +27,7 @@ import {
   TriangleAlert,
   WifiOff,
 } from "lucide-react";
-import type { LucideIcon } from "lucide-react";
+import { Card, Panel, Empty } from "./components/Layout";
 import {
   base,
   brDate,
@@ -103,73 +103,6 @@ const statusLabel: Record<string, string> = {
   pending: "Pendente",
   blocked: "Não homologado",
 };
-function Card({
-  title,
-  value,
-  description,
-  icon: Icon,
-  tone = "",
-}: {
-  title: string;
-  value: string;
-  description: string;
-  icon: LucideIcon;
-  tone?: string;
-}) {
-  return (
-    <article className={"metric " + tone}>
-      <div className="metric-top">
-        <span>{title}</span>
-        <Icon size={19} />
-      </div>
-      <strong>{value}</strong>
-      <p>{description}</p>
-    </article>
-  );
-}
-function Panel({
-  title,
-  subtitle,
-  children,
-  action,
-}: {
-  title: string;
-  subtitle?: string;
-  children: React.ReactNode;
-  action?: React.ReactNode;
-}) {
-  return (
-    <section className="panel">
-      <div className="panel-title">
-        <div>
-          <h2>{title}</h2>
-          {subtitle && <p>{subtitle}</p>}
-        </div>
-        {action}
-      </div>
-      {children}
-    </section>
-  );
-}
-function Empty({
-  title,
-  children,
-  icon: Icon = WifiOff,
-}: {
-  title: string;
-  children: React.ReactNode;
-  icon?: LucideIcon;
-}) {
-  return (
-    <div className="empty">
-      <span className="empty-icon">
-        <Icon size={25} />
-      </span>
-      <h3>{title}</h3>
-      <p>{children}</p>
-    </div>
-  );
-}
 function Method({
   name,
   formula,
