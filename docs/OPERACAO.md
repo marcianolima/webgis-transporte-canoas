@@ -104,3 +104,8 @@ Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md) para os comandos, timeout de 60 s, 
 ## Expansão territorial das paradas 0.4.0
 
 [COBERTURA-PARADAS.md](COBERTURA-PARADAS.md) documenta as rodadas limitadas, reaproveitamento do cache e inventário de completude. Não usar `--service-date today` ao buscar o cadastro completo das linhas correspondentes: isso excluiria linhas sem programação para a data. `--prediction-samples 0` desliga previsões e aquisição de novas geometrias nesta coleta de coordenadas. Dados já publicados são preservados. O workflow manual continua limitado e sem coleta GPS contínua.
+
+
+## Integração de veículos TACOM/GoBus — disponível no código, opt-in
+
+O projeto inclui um serviço `gobus-live` no perfil separado de Docker Compose. Não é iniciado por padrão nem publica posições sem a variável `PUBLIC_POSITIONS_ENABLED=true` no backend. O feed de referência utiliza `time_basis=client_fetch`: a hora da consulta **não é** a hora de medição do equipamento GPS. Consulte [GOBUS-LIVE.md](GOBUS-LIVE.md) antes de ativar; mantenha `SOURCE_HOMOLOGATED=false` até validar timestamp de origem e contrato temporal.
