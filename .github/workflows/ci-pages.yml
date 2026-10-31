@@ -65,6 +65,12 @@ jobs:
         env:
           PYTHONPATH: pipeline
         run: python -m transporte.tiles
+      - name: Validar Docker Compose, perfil do coletor e borda HTTPS (sem iniciar serviços)
+        env:
+          POSTGRES_PASSWORD: ci-placeholder-not-a-real-secret
+          ADMIN_API_KEY: ci-placeholder-not-a-real-secret-12345
+          TLS_CERT_DIR: ./infra/certs
+        run: docker compose --profile gobus-live --profile edge config --quiet
       - name: Testes Python e validação dos dados públicos
         env:
           PYTHONPATH: pipeline
