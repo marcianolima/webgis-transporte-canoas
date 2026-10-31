@@ -2,11 +2,11 @@
 
 Plataforma de informação e análise do transporte coletivo municipal de Canoas/RS, com programação real da Sogal, cartografia local, metodologia aberta e infraestrutura para histórico e fiscalização.
 
-**Versão 0.2.0 — mapa PMTiles local, seleção de linhas e importação de percursos; GPS GoBus ainda não homologado.** Não é declarado atendimento integral dos critérios da versão 1.0. Não são gerados veículos, paradas, viagens realizadas ou infrações fictícios.
+**Versão 0.2.0 — mapa PMTiles local, seleção de linhas e importação de percursos; engenharia reversa estática do APK GoBus concluída, GPS ainda não homologado.** Não é declarado atendimento integral dos critérios da versão 1.0. Não são gerados veículos, paradas, viagens realizadas ou infrações fictícios.
 
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
-[Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
+[Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
 
 ## Dados efetivamente obtidos
 
@@ -41,7 +41,9 @@ Bases locais: **18 bairros oficiais** reutilizados do GeoCanoas/WebGIS Empreende
 
 O aplicativo `com.tacom.canoas.gobus` foi identificado na loja TACOM; versão 1.31.3 observada no HTML obtido nesta execução. A documentação de terceiros da família SIU foi investigada. Uma resposta BHZ foi validada como **Belo Horizonte** e excluída de Canoas. O código `GOBUS` mencionado nessa referência não foi considerado confirmação de API municipal.
 
-Nenhum APK autorizado estava disponível. Nenhuma decompilação, captura de tráfego ou endpoint GPS municipal foi homologado. Hosts candidatos retornaram 503 neste ambiente; uma consulta SIU com praça GOBUS retornou lista vazia, insuficiente para homologação. O endpoint de mapa NGS retornou 404. As descobertas, hipóteses e bloqueios estão em [Engenharia reversa](docs/ENGENHARIA-REVERSA.md), com utilitário offline de triagem de APK.
+**Novo resultado da análise de 30/10/2026:** APK 1.29.1.2 fornecido pelo operador e inspecionado estaticamente. Confirmados Cordova, base configurada `mpa.siumobile.com.br:6060`, endpoints V3 para itinerário geográfico, paradas, posições, ETA e horários, códigos de retorno e campos utilizados pelo aplicativo. Integração offline de parsing preparada em `pipeline/transporte/gobus.py` e nove testes automatizados em `tests/test_gobus.py`. O código do app consulta posições em intervalos de 6 s, mas isto não autoriza coleta nessa frequência.
+
+**Ainda não comprovado:** resposta do serviço para Canoas, código de cidade validado por `cidadesApp`, vínculo entre IDs de itinerário SIU e linhas NGS, timestamp de GPS de origem, limites/autorização de consulta e redistribuição. A tentativa de resolver o host configurado falhou no ambiente de análise; nenhum dado GPS/parada/shape municipal foi obtido. A aplicação continua a não inventar rotas ou posições. [Relatório técnico](docs/APK-GOBUS-1.29.1.2.md).
 
 A integração real desta versão usa **Sogal/NGS**, cujo portal expõe cadastro, datas, horários e logradouros sem autenticação nas consultas observadas. Catálogo de [endpoints e contratos](docs/ENDPOINTS.md). Google Play, Apple, Sogal e NGS são fontes primárias; a referência SIU de Bruno Armanelli é atribuída e não foi copiada.
 
@@ -124,4 +126,4 @@ Código original: licença MIT, em `LICENSE`. Dados e serviços permanecem sujei
 
 ## Revisão 0.2.0
 
-Mapa compatível com navegadores sem WebGL, arquivo PMTiles local com manifesto e hashes, seleção de linhas e bairro, mapa na ficha da linha, importação validada de GeoJSON/GTFS e testes de transporte Range, geometrias e tiles. Engenharia reversa **do GoBus/TACOM continua sem API GPS homologada**; a integração real de horários é Sogal/NGS. Consulte os critérios em [VERSAO-1.0.md](docs/VERSAO-1.0.md).
+Mapa compatível com navegadores sem WebGL, arquivo PMTiles local com manifesto e hashes, seleção de linhas e bairro, mapa na ficha da linha, importação validada de GeoJSON/GTFS e testes de transporte Range, geometrias e tiles. Engenharia reversa **estática do GoBus/TACOM agora confirmou os contratos no APK**, mas continua sem API GPS municipal homologada; a integração real de horários é Sogal/NGS. Consulte os critérios em [VERSAO-1.0.md](docs/VERSAO-1.0.md).
