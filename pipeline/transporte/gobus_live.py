@@ -228,7 +228,7 @@ class LiveCollector:
         positions = []
         fetched_ids = set()
         for itinerary_id in sorted(active, key=int)[:itinerary_queries]:
-            if self.requests >= self.maximum or self.denied:
+            if self.requests >= self.maximum or self.denied or self.exhausted or self.throttled:
                 break
             try:
                 raw, fetched_at = self.get("veiculos", itinerario=itinerary_id, cidade="MPA")
