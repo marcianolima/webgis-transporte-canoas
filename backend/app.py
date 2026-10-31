@@ -66,7 +66,7 @@ def create_app(store=None):
             row=connection.execute('SELECT ended_at,status FROM collection_run ORDER BY started_at DESC LIMIT 1').fetchone()
         return {'status':row['status'] if row else 'not_configured','last_run_at':row['ended_at'] if row else None,'time':utcnow()}
 
-    def vehicle_limit(request):
+    def vehicle_limit(request: Request):
         # Defesa em profundidade; proxy Nginx aplica a limitação distribuída.
         # Somente endereço de conexão, nunca X-Forwarded-For arbitrário.
         identity = request.client.host if request.client else 'unknown'
