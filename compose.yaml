@@ -64,6 +64,8 @@ services:
       GOBUS_ACCEPT_HTTP: ${GOBUS_ACCEPT_HTTP:-false}
       GOBUS_REQUEST_SPACING: ${GOBUS_REQUEST_SPACING:-15}
       GOBUS_CYCLE_SECONDS: ${GOBUS_CYCLE_SECONDS:-180}
+      GOBUS_MAX_PER_HOUR: ${GOBUS_MAX_PER_HOUR:-120}
+      GOBUS_MAX_PER_DAY: ${GOBUS_MAX_PER_DAY:-1000}
     depends_on:
       db:
         condition: service_healthy
