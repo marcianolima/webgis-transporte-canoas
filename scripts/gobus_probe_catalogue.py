@@ -32,17 +32,35 @@ def fetch(opener, kind):
         raise ValueError('Resposta excessiva')
     return body.decode('utf-8-sig')
 
+def checked_fetch(opener, kind):
+    try:
+        return fetch(opener, kind)
+    except HTTPError as exc:
+        raise ValueError(f'{kind}:http_{exc.code}') from None
+    except URLError:
+        raise ValueError(f'{kind}:network_error') from None
+    except TimeoutError:
+        raise ValueError(f'{kind}:timeout') from None
+    except ValueError:
+        raise ValueError(f'{kind}:redirect_or_invalid_response') from None
+
 def discover(opener, sleep=time.sleep):
     # Limite fixo de 2 chamadas, sem redirecionamento ou repetição.
-    raw_cities=fetch(opener,'cidades')
-    target=[c for c in cities(raw_cities) if c['code']=='CAN' and 'CANOAS' in c['name'].upper()]
+    raw_cities=checked_fetch(opener,'cidades')
+    try:
+        registered=cities(raw_cities)
+    except (ValueError, TypeError, SyntaxError, KeyError):
+        raise ValueError('cidades:invalid_schema') from None
+    target=[c for c in registered if c['code']=='CAN' and 'CANOAS' in c['name'].upper()]
     if len(target)!=1:
-        raise ValueError('CAN/Canoas não confirmado pelo serviço configurado')
+        raise ValueError('cidades:CAN_not_confirmed')
     sleep(2)
-    raw_lines=fetch(opener,'linhas')
-    values=lines(raw_lines)
-    # buscarLinhas não aplica filtro de cidade por padrão no APK;
-    # não tratar resultado agregado como cadastro municipal.
+    raw_lines=checked_fetch(opener,'linhas')
+    try:
+        values=lines(raw_lines)
+    except (ValueError,TypeError,SyntaxError,KeyError):
+        raise ValueError('linhas:invalid_schema') from None
+    # Cadastro não filtrado por cidade na requisição do APK; não atribuir tudo a Canoas.
     explicitly_city=[x for x in values if x.get('praca')=='CAN']
     return {'city_verified':True,'city_code':'CAN',
             'total_source_lines':len(values),'explicit_can_lines':len(explicitly_city),
@@ -62,6 +80,7 @@ def main():
     except (ValueError,HTTPError,URLError,TimeoutError,OSError,UnicodeError) as exc:
         # Sem exposição do corpo, nomes de linhas ou URLs com parâmetros.
         print(json.dumps({'status':'unverified','error_type':type(exc).__name__,
+                          'diagnostic_code':str(exc) if str(exc).startswith(('cidades:','linhas:')) else 'unclassified',
                           'gps_collected':False},ensure_ascii=False),file=sys.stderr)
         raise SystemExit(2) from None
 
