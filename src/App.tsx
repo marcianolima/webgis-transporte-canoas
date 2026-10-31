@@ -202,13 +202,22 @@ function Method({
 function MapBox({
   data,
   territorial = false,
+  selectedRouteIds,
+  compact = false,
 }: {
   data: AppData;
   territorial?: boolean;
+  selectedRouteIds?: string[];
+  compact?: boolean;
 }) {
   return (
     <Suspense fallback={<div className="loading-map">Carregando mapa…</div>}>
-      <TransportMap data={data} territorial={territorial} />
+      <TransportMap
+        data={data}
+        territorial={territorial}
+        selectedRouteIds={selectedRouteIds}
+        compact={compact}
+      />
     </Suspense>
   );
 }
@@ -442,7 +451,7 @@ function App() {
           <a href={github} target="_blank" rel="noreferrer">
             Código e documentação <ArrowUpRight size={13} />
           </a>
-          <small>v0.1 · integração em homologação</small>
+          <small>v0.2 · integração em homologação</small>
         </div>
       </aside>
       <div className="workspace">
@@ -647,7 +656,7 @@ function App() {
                         </a>
                       }
                     >
-                      <MapBox data={data} />
+                      <MapBox data={data} compact />
                     </Panel>
                     <Panel
                       title="Linhas na programação"
@@ -868,6 +877,16 @@ function App() {
                             Conferir na fonte
                             <ArrowUpRight size={14} />
                           </a>
+                        </Panel>
+                        <Panel
+                          title="Percurso no mapa"
+                          subtitle="Geometria de referência quando disponível; consulte origem e vigência"
+                        >
+                          <MapBox
+                            data={data}
+                            selectedRouteIds={[selected.id]}
+                            compact
+                          />
                         </Panel>
                         <Panel
                           title="Itinerário em logradouros"
@@ -1350,7 +1369,7 @@ function App() {
                       icon={Target}
                     />
                   </div>
-                  <MapBox data={data} territorial />
+                  <MapBox data={data} territorial compact />
                   <Panel
                     title="Leitura por bairro"
                     subtitle="Área calculada em SIRGAS 2000 / UTM 22S (EPSG:31982)"
@@ -1489,6 +1508,99 @@ function App() {
                       </details>
                     )}
                   </Panel>
+                  <Panel
+                    title="O que falta para a versão 1.0"
+                    subtitle="A implementação de uma tela não comprova homologação dos dados"
+                  >
+                    <div className="table-scroll">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>Recurso</th>
+                            <th>Situação verificável</th>
+                            <th>Próxima dependência</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr>
+                            <td>Mapa territorial e PMTiles</td>
+                            <td>
+                              {data.mapManifest
+                                ? `${data.mapManifest.layers.bairros} bairros e ${data.mapManifest.layers.setores} setores empacotados localmente`
+                                : "PMTiles não carregado; alternativa GeoJSON disponível"}
+                            </td>
+                            <td>Revalidar publicação e testes em campo</td>
+                          </tr>
+                          <tr>
+                            <td>Linhas e horários</td>
+                            <td>
+                              {data.network.routes.length} linhas cadastradas;{" "}
+                              {number(data.network.departures.length)} saídas
+                              programadas na base
+                            </td>
+                            <td>
+                              Acordo de uso e acompanhamento das alterações da
+                              operadora
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Trajetos e paradas</td>
+                            <td>
+                              {data.mapManifest?.route_geometry_count ?? 0}{" "}
+                              linhas com geometria; {data.stops.features.length}{" "}
+                              paradas publicadas
+                            </td>
+                            <td>
+                              GTFS/GeoJSON municipal com origem, vigência e
+                              vinculação homologadas
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>GoBus, veículos e previsões</td>
+                            <td>API operacional de Canoas não homologada</td>
+                            <td>
+                              APK legítimo ou documentação/acesso autorizado da
+                              TACOM; validar contratos e limites
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Auditoria da operação</td>
+                            <td>
+                              Regras e testes implementados; resultados
+                              operacionais pendentes
+                            </td>
+                            <td>
+                              Histórico GPS confiável, viagens, trajetos
+                              temporais e critérios acordados com a fiscalização
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Backend persistente</td>
+                            <td>
+                              API, worker e infraestrutura preparados no
+                              repositório
+                            </td>
+                            <td>
+                              Hospedagem, segredos, banco, backups e homologação
+                              de acesso restrito em produção
+                            </td>
+                          </tr>
+                          <tr>
+                            <td>Homologação municipal</td>
+                            <td>Versão 0.2 em desenvolvimento</td>
+                            <td>
+                              Validação dos dados, uso em campo, acessibilidade
+                              e aceite formal
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="caption">
+                      Ausência de GPS não comprova cancelamento de viagem.
+                      Nenhuma infração é atribuída automaticamente.
+                    </p>
+                  </Panel>
                   <Panel title="Documentação técnica">
                     <div className="doc-links">
                       {[
@@ -1501,6 +1613,14 @@ function App() {
                         ["METODOLOGIA.md", "Indicadores e auditoria"],
                         ["OPERACAO.md", "Infraestrutura e recuperação"],
                         ["HOMOLOGACAO.md", "Relatório de testes e limitações"],
+                        [
+                          "MAPA-PMTILES.md",
+                          "Mapa, PMTiles e importação de trajetos",
+                        ],
+                        [
+                          "VERSAO-1.0.md",
+                          "Critérios pendentes para a versão 1.0",
+                        ],
                       ].map(([file, title]) => (
                         <a
                           key={file}

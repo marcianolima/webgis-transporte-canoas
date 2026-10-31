@@ -104,7 +104,23 @@ export interface Vehicles {
   vehicles: Vehicle[];
   message: string;
 }
+export interface MapManifest {
+  schema_version: number;
+  file: string;
+  sha256: string;
+  bytes: number;
+  bounds: [number, number, number, number];
+  minzoom: number;
+  maxzoom: number;
+  tile_count: number;
+  layers: Record<string, number>;
+  route_geometry_count: number;
+  route_catalogue_count: number;
+  route_status: Record<string, { status: string; shape_count: number }>;
+}
 export interface AppData {
+  routeShapes?: FeatureCollection;
+  mapManifest?: MapManifest;
   network: Network;
   catalogue: Catalogue;
   territory: Territory;

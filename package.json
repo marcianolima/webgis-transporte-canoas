@@ -1,6 +1,6 @@
 {
   "name": "webgis-transporte-canoas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "packageManager": "npm@11.4.2",
@@ -12,10 +12,13 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
+    "@mapbox/vector-tile": "^2.0.4",
     "echarts": "^6.0.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.548.0",
     "maplibre-gl": "^5.9.0",
+    "pbf": "^4.0.1",
+    "pmtiles": "^4.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
@@ -24,6 +27,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/leaflet": "^1.9.20",
     "@types/node": "^24.0.0",
+    "@types/pbf": "^3.0.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@vitejs/plugin-react": "^5.0.4",

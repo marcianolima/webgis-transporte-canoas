@@ -118,12 +118,37 @@ export async function loadData(): Promise<AppData> {
     "stops.geojson",
     "boundary.geojson",
     "vehicles.json",
+    "map-manifest.json",
+    "route-shapes.geojson",
   ];
   const values = await Promise.all(
     names.map(async (name) => {
-      const r = await fetch(base + "data/" + name);
-      if (!r.ok) throw new Error("Não foi possível carregar " + name);
-      return r.json();
+      const optional =
+        name === "map-manifest.json" || name === "route-shapes.geojson";
+      try {
+        const response = await fetch(base + "data/" + name);
+        if (!response.ok) throw new Error("Não foi possível carregar " + name);
+        const document = await response.json();
+        if (
+          name === "map-manifest.json" &&
+          (!/^[\w-]+\.pmtiles$/.test(document.file) ||
+            !/^[a-f0-9]{64}$/.test(document.sha256) ||
+            !document.layers)
+        )
+          throw new Error("Manifesto cartográfico incompatível");
+        if (
+          name === "route-shapes.geojson" &&
+          (document.type !== "FeatureCollection" ||
+            !Array.isArray(document.features))
+        )
+          throw new Error("Geometria cartográfica incompatível");
+        return document;
+      } catch (error) {
+        if (!optional) throw error;
+        return name === "map-manifest.json"
+          ? undefined
+          : { type: "FeatureCollection", features: [] };
+      }
     }),
   );
   const [
@@ -135,6 +160,8 @@ export async function loadData(): Promise<AppData> {
     stops,
     boundary,
     vehicles,
+    mapManifest,
+    routeShapes,
   ] = values;
   if (
     network.schema_version !== 1 ||
@@ -151,5 +178,7 @@ export async function loadData(): Promise<AppData> {
     stops,
     boundary,
     vehicles,
+    mapManifest,
+    routeShapes,
   };
 }

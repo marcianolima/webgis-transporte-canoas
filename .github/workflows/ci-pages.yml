@@ -46,6 +46,10 @@ jobs:
         run: |
           python -m transporte.collect --days 5
           python scripts/prepare_catalogue.py
+      - name: Gerar arquivo PMTiles e catálogo de geometrias
+        env:
+          PYTHONPATH: pipeline
+        run: python -m transporte.tiles
       - name: Testes Python e validação dos dados públicos
         env:
           PYTHONPATH: pipeline

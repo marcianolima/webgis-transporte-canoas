@@ -44,3 +44,7 @@ Consultar `ENGENHARIA-REVERSA.md`. Somente contrato de BHZ observado; **nenhum e
 A chave é somente do servidor (`ADMIN_API_KEY`, mínimo de 32 caracteres). A configuração ausente falha de forma fechada. Produção exige TLS. O painel público não solicita nem recebe a chave. A identidade compartilhada não equivale a identificação nominal; integrar SSO municipal antes de uso multiusuário com responsabilização individual.
 
 Feed de entrada do worker: contrato **normalizado próprio**, não uma alegação de compatibilidade direta com SIU. Exige `{vehicles:[{source_id,vehicle_id,route_id,observed_at,longitude,latitude,scope:"municipal",municipality_code:"4304606",speed_kmh?,bearing?}]}`. Registros de outras redes são rejeitados. Adaptador do protocolo efetivo da TACOM depende da validação do APK e amostras.
+
+## Arquivos cartográficos da aplicação — 0.2.0
+
+`data/transporte-canoas.pmtiles`: arquivo PMTiles v3/MVT estático publicado no Pages. Leitura GET/Range; alternativa GET completo limitada a 20 MB para servidor sem Range. `data/map-manifest.json`: tamanho, SHA-256, fontes, contagens e disponibilidade por linha. `data/route-shapes.geojson`: geometrias de referência com proveniência, atualmente FeatureCollection vazia com status pendente. Estes arquivos são produtos locais; não são endpoints descobertos do GoBus.

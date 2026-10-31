@@ -2,9 +2,11 @@
 
 Plataforma de informação e análise do transporte coletivo municipal de Canoas/RS, com programação real da Sogal, cartografia local, metodologia aberta e infraestrutura para histórico e fiscalização.
 
-**Versão 0.1.0 — programação e território integrados; GPS GoBus ainda não homologado.** Não é declarado atendimento integral dos critérios da versão 1.0. Não são gerados veículos, paradas, viagens realizadas ou infrações fictícios.
+**Versão 0.2.0 — mapa PMTiles local, seleção de linhas e importação de percursos; GPS GoBus ainda não homologado.** Não é declarado atendimento integral dos critérios da versão 1.0. Não são gerados veículos, paradas, viagens realizadas ou infrações fictícios.
 
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
+
+[Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
 
 ## Dados efetivamente obtidos
 
@@ -26,7 +28,7 @@ Bases locais: **18 bairros oficiais** reutilizados do GeoCanoas/WebGIS Empreende
 
 - Dez páginas: Painel Geral, Mapa de Transporte, Linhas e Itinerários, Pontos de Parada, Monitoramento, Auditoria Operacional, Indicadores, Análise Territorial, Relatórios e Dados e Metodologia.
 - Consulta por data e linha, busca por código/nome, sentidos e saídas programadas, identificação da madrugada seguinte e itinerários textuais originais.
-- Mapa de bairros e setores; densidade populacional; zoom, seleção e popups; localização do usuário somente mediante permissão. MapLibre com alternativa Leaflet quando WebGL está indisponível.
+- Mapa PMTiles local de bairros e setores, com modo compatível sem WebGL e MapLibre selecionável; densidade, seleção de bairros, popups, localização mediante permissão e fallback GeoJSON. Seleção de várias linhas, desenho e enquadramento quando existe geometria real; hoje 0/81 percursos disponíveis, com indicação explícita. Importador GeoJSON/GTFS com proveniência, escopo municipal e histórico local.
 - Temas claro/escuro, menu lateral no desktop e menu móvel com página ativa visível.
 - Indicadores de programação, distribuição horária, comparações por data e ranking de saídas por linha, com fórmulas e limites explícitos.
 - Relatórios filtrados por data, linha, sentido e horas de serviço; CSV/JSON; impressão para PDF; bases GeoJSON locais.
@@ -45,7 +47,7 @@ A integração real desta versão usa **Sogal/NGS**, cujo portal expõe cadastro
 
 ## Arquitetura e tecnologias
 
-- Frontend: React 19, TypeScript, Vite, MapLibre GL JS, Leaflet, ECharts e CSS responsivo. CSS próprio preserva identidade institucional e reduz a camada de dependências; Tailwind não foi necessário.
+- Frontend: React 19, TypeScript, Vite, MapLibre GL JS, Leaflet/Canvas, PMTiles v3/MVT, ECharts e CSS responsivo. CSS próprio preserva identidade institucional e reduz a camada de dependências; Tailwind não foi necessário.
 - ETL: Python 3.12, cliente HTTP auditável, Shapely e PyProj. EPSG:4326 para intercâmbio, EPSG:31982 para área/distância.
 - Histórico: SQLite para snapshots estáticos e testes; PostgreSQL para produção operacional. Modelo PostGIS temporal complementar preparado para geometrias e viagens.
 - Backend: FastAPI com API pública de posições recentes e API/painel restritos. Nenhuma chave no frontend. Feed GPS de entrada é um contrato normalizado próprio, dependente de adaptador TACOM homologado.
@@ -70,7 +72,7 @@ PYTHONPATH=pipeline .venv/bin/pytest -q
 PYTHONPATH=pipeline .venv/bin/python scripts/validate_public.py
 ```
 
-Resultado local: **57 testes Python e 10 testes TypeScript/React aprovados**, lint e build de produção aprovados. Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
+Resultado local: **65 testes Python e 23 testes TypeScript/React aprovados**, lint e build de produção aprovados. Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
 
 ## Atualização dos dados e publicação
 
@@ -117,4 +119,9 @@ Código original: licença MIT, em `LICENSE`. Dados e serviços permanecem sujei
 
 ## Histórico
 
+- **0.2.0 — 30/10/2026:** PMTiles local, mapa compatível sem WebGL, seleção e desenho condicionado a geometria real, importador GeoJSON/GTFS, recuperação e testes adicionais.
 - **0.1.0 — 30/10/2026:** primeira integração verificável de programação NGS, bairros e setores; frontend público, histórico estático, API/painel privados preparados, motor de consistência, testes e workflow. GPS e demais dependências identificadas explicitamente.
+
+## Revisão 0.2.0
+
+Mapa compatível com navegadores sem WebGL, arquivo PMTiles local com manifesto e hashes, seleção de linhas e bairro, mapa na ficha da linha, importação validada de GeoJSON/GTFS e testes de transporte Range, geometrias e tiles. Engenharia reversa **do GoBus/TACOM continua sem API GPS homologada**; a integração real de horários é Sogal/NGS. Consulte os critérios em [VERSAO-1.0.md](docs/VERSAO-1.0.md).

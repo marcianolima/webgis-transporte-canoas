@@ -25,8 +25,17 @@ def main():
                 for c in x:coords(c)
         for f in j['features']:coords(f['geometry']['coordinates'])
     for file in data.iterdir():
+        assert file.suffix in ('.json','.geojson','.pmtiles'),file.name
         assert file.stat().st_size<20_000_000,(file.name,'artefato > 20 MB')
-        assert 'SYNTHETIC' not in file.read_text(),file.name
+        if file.suffix!='.pmtiles':assert 'SYNTHETIC' not in file.read_text(),file.name
+    manifest=json.loads((data/'map-manifest.json').read_text());tilefile=data/manifest['file']
+    assert tilefile.read_bytes().startswith(b'PMTiles')
+    assert hashlib.sha256(tilefile.read_bytes()).hexdigest()==manifest['sha256']
+    assert tilefile.stat().st_size==manifest['bytes']
+    for filename,digest in manifest['source_hashes'].items():assert hashlib.sha256((data/filename).read_bytes()).hexdigest()==digest
+    geometries=json.loads((data/'route-shapes.geojson').read_text())['features']
+    assert all(f['properties']['route_id'] in routes for f in geometries)
+    assert manifest['route_geometry_count']==len({f['properties']['route_id'] for f in geometries})
     assert not json.loads((data/'boundary.geojson').read_text())['features'][0]['properties']['is_official_municipal_boundary']
     print(json.dumps({'status':'passed','routes':len(routes),'departures':len(keys),'dates':len(n['source_dates']),'public_bytes':sum(p.stat().st_size for p in data.iterdir())}))
 if __name__=='__main__':main()

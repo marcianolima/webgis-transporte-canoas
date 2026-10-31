@@ -1,6 +1,20 @@
-# Relatório técnico da execução — 30/10/2026
+# Relatório técnico — revisões de 30/10/2026
 
-## Resultado efetivo
+## Revisão 0.2.0: mapa PMTiles e seleção de linhas
+
+Implementados: modo compatível sem WebGL, PMTiles v3/MVT local, desenho vetorial Canvas com ampliação vetorial, filtro de uma/várias linhas, cores estáveis, enquadramento, seleção de bairros, mapa na ficha da linha, recuperação GeoJSON e reinicialização. O arquivo real tem 18 bairros, 659 setores, 27 tiles e aproximadamente 263 kB. Manifesto identifica hash, fontes, disponibilidade e generalização. Não depende de mapa OSM ou chave comercial.
+
+Importador GeoJSON/GTFS implementado com join por código exato, agência municipal explícita, coordenadas, validade GTFS quando publicada, proveniência e histórico local por hash. **Não há feed real de percursos homologado: 0/81 linhas com geometria e 0 paradas.** Desenho de percursos foi verificado em fixture sintética isolada e não publicada. Nenhum trajeto foi inferido da lista de logradouros.
+
+Verificações desta revisão: **65 testes Python**, **23 testes TypeScript/React**, ESLint e build de produção aprovados localmente. Testes novos cobrem arquivo PMTiles real, contagens e hashes, tile de Canoas, orientação MVT, determinismo, GeoJSON/GTFS, seleção, busca, limpeza, enquadramento e transporte Range/sem Range/cancelamento/limite. Validação pública: 81 IDs, 4.990 saídas, 5 datas, sem fixtures sintéticas nos dados publicados.
+
+QA visual: PMTiles de bairros/setores carregou no navegador; seleção de bairro enquadrou corretamente; linha sem geometria informou a ausência; fixture isolada desenhou e removeu percurso. Viewport móvel interno 390×844: altura de mapa 440 px, `clientWidth=scrollWidth=375` (15 px de scrollbar). É um viewport de teste, não aparelho físico. WebGL continua indisponível nesse navegador; não se declara homologação visual do motor MapLibre. A falha original em dispositivo do usuário não foi reproduzida; o caminho de inicialização foi substituído por modo compatível e recuperação explícita.
+
+GPS GoBus, ETA, cadastro geográfico e resultados de auditoria operacional continuam pendentes. O avanço no mapa não encerra a engenharia reversa TACOM. [Pendências da 1.0](VERSAO-1.0.md) e [operação PMTiles](MAPA-PMTILES.md).
+
+O estado do deploy desta revisão deve ser conferido no run associado ao commit final; os registros abaixo descrevem a publicação da 0.1.0 e não são prova do deploy da 0.2.0.
+
+## Resultado da revisão anterior (0.1.0)
 
 Versão 0.1.0 com programação real da Sogal/NGS e análise territorial. Repositório inicial possuía somente README (commit `3157eaed939adb63d0e5b9843293ed88dcdad5e1`), na branch `main`, sem código a descartar.
 
