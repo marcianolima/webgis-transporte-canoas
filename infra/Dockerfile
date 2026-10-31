@@ -8,7 +8,7 @@ COPY public/data/stop-inventory.json /app/public/data/stop-inventory.json
 COPY public/data/route-shapes.geojson /app/public/data/route-shapes.geojson
 COPY public/data/bairros-oficiais.geojson /app/public/data/bairros-oficiais.geojson
 COPY infra/sql /app/infra/sql
-RUN mkdir -p /app/var && chown -R transporte:transporte /app/var
+RUN mkdir -p /app/var/gobus && chown -R transporte:transporte /app/var
 ENV PYTHONPATH=/app/pipeline:/app PYTHONUNBUFFERED=1
 USER transporte
 CMD ["uvicorn","backend.app:create_app","--factory","--host","0.0.0.0","--port","8000"]
