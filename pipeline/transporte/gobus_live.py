@@ -63,19 +63,43 @@ def reference_shapes(document):
     return index
 
 
-def selected_stops(inventory, valid_routes, offset=0, count=8):
+def selected_stops(inventory, valid_routes, offset=0, count=8, stop_geometries=None):
+    """Amostragem apenas de IDs inventariados; ordenação geográfica quando disponível.
+
+    Células de ~2 km por dimensão e amostragem sistemática. Não representa
+    cobertura de frota ou enumeração de todos os pontos da cidade.
+    """
     if inventory.get("municipality_code") != MUNICIPALITY or inventory.get("city_id") != "4":
         raise ValueError("Inventário de parada fora do município TACOM validado")
-    stops = sorted({
+    allowed = {
         str(r["stop_id"]) for r in inventory.get("stops", [])
         if r.get("status") == "located" and str(r.get("stop_id", "")).isdecimal()
         and any(str(x) in valid_routes for x in r.get("route_ids", []))
-    }, key=int)
-    if not stops or count <= 0:
+    }
+    if not allowed or count <= 0:
         return []
-    # Estratificação sobre o inventário inteiro, não somente sobre o centro.
-    n = min(count, len(stops))
-    return [stops[(offset + (i * len(stops)) // n) % len(stops)] for i in range(n)]
+    cells = {}
+    if stop_geometries is not None:
+        if stop_geometries.get("type") != "FeatureCollection":
+            raise ValueError("Geometria das paradas precisa ser FeatureCollection")
+        for feature in stop_geometries.get("features", []):
+            props = feature.get("properties") or {}
+            sid = str(props.get("stop_id", ""))
+            geom = feature.get("geometry") or {}
+            coordinates = geom.get("coordinates")
+            if (sid not in allowed or geom.get("type") != "Point" or
+                    not isinstance(coordinates, list) or len(coordinates) != 2):
+                continue
+            lon, lat = coordinates
+            if valid_coordinate(lon, lat):
+                cells[sid] = (int((float(lon) + 51.40) / 0.025),
+                              int((float(lat) + 30.12) / 0.020))
+    ordered = sorted(
+        allowed, key=lambda sid: (0, *cells[sid], int(sid))
+        if sid in cells else (1, 0, 0, int(sid))
+    )
+    n = min(count, len(ordered))
+    return [ordered[(offset + (i * len(ordered)) // n) % len(ordered)] for i in range(n)]
 
 
 class LiveCollector:
@@ -194,13 +218,15 @@ class LiveCollector:
                 raise
         raise ValueError("Consulta não concluída")
 
-    def once(self, inventory, shapes, neighborhoods, *, stop_queries=8, itinerary_queries=6):
+    def once(self, inventory, shapes, neighborhoods, *, stop_queries=8, itinerary_queries=6,
+             stop_geometries=None):
         if not 1 <= stop_queries <= 30 or not 1 <= itinerary_queries <= 30:
             raise ValueError("Limite de paradas/itinerários inválido")
         index = reference_shapes(shapes)
         valid_routes = {v[0] for v in index.values()}
         area = MunicipalReferenceArea(neighborhoods)
-        ids = selected_stops(inventory, valid_routes, self.state["cursor"], stop_queries)
+        ids = selected_stops(inventory, valid_routes, self.state["cursor"], stop_queries,
+                             stop_geometries=stop_geometries)
         self.state["cursor"] += 1
         self.state["cycle"] += 1
         cycle = self.state["cycle"]
@@ -340,6 +366,7 @@ def main():
     inventory = json.loads((data / "stop-inventory.json").read_text())
     shapes = json.loads((data / "route-shapes.geojson").read_text())
     neighborhoods = json.loads((data / "bairros-oficiais.geojson").read_text())
+    stop_geometries = json.loads((data / "stops.geojson").read_text())
     previous = json.loads(state_path.read_text()) if state_path.is_file() else {}
     cache = {}  # Cache exclusivamente em memória, nunca no GitHub Pages.
     with httpx.Client(follow_redirects=False, trust_env=False) as client:
@@ -350,7 +377,8 @@ def main():
                                       max_per_day=args.max_per_day)
             report = collector.once(inventory, shapes, neighborhoods,
                                     stop_queries=args.stop_queries,
-                                    itinerary_queries=args.itinerary_queries)
+                                    itinerary_queries=args.itinerary_queries,
+                                    stop_geometries=stop_geometries)
             output.parent.mkdir(parents=True, exist_ok=True)
             atomic_json(output, report)
             atomic_json(state_path, collector.state)
