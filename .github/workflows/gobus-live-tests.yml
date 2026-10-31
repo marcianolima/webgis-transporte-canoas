@@ -1,0 +1,30 @@
+name: GoBus · testes offline do adaptador
+on:
+  pull_request:
+    paths:
+      - "pipeline/transporte/gobus.py"
+      - "pipeline/transporte/gobus_live.py"
+      - "pipeline/transporte/gobus_live_worker.py"
+      - "pipeline/transporte/audit.py"
+      - "backend/app.py"
+      - "tests/test_gobus_live.py"
+      - "tests/test_gobus_temporal.py"
+      - "tests/test_gobus_live_worker.py"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.lock
+      - name: Contratos JSONP e ingestão simulados, estritamente sem rede
+        env:
+          PYTHONPATH: pipeline:.
+        run: |
+          pytest -q tests/test_gobus.py tests/test_gobus_live.py tests/test_gobus_temporal.py tests/test_gobus_live_worker.py tests/test_store_api.py
