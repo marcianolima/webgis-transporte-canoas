@@ -27,13 +27,15 @@ Erros: 401/403/404 não geram repetição; 5xx/timeouts têm backoff. HTTP 200 c
 
 ## Família SIU
 
-Consultar `ENGENHARIA-REVERSA.md`. Somente contrato de BHZ observado; **nenhum endpoint SIU homologado para Canoas**. JSONP é analisado como dados, nunca executado. O parser admite listas de dicionários em string legada com `ast.literal_eval`, sem `eval` e sem substituir apóstrofos de nomes.
+Consultar `ENGENHARIA-REVERSA.md` para a pesquisa histórica da família SIU. **Nesta revisão foram confirmados em MPA os serviços de leitura de cidades, linhas, paradas e previsões com amostras de Canoas.** Isso não constitui homologação da telemetria GPS ou de todos os itinerários. JSONP é analisado como dados, nunca executado. O parser admite listas de dicionários em string legada com `ast.literal_eval`, sem `eval` e sem substituir apóstrofos de nomes.
 
 ## GoBus/TACOM — contratos confirmados estaticamente no APK 1.29.1.2
 
 A análise do APK confirmou o host configurado `http://mpa.siumobile.com.br:6060/siumobile-ws-v01/rest/ws/` e caminhos de GET/JSONP para `buscarLinhas`, `cidadesApp`, `V3/buscarItinerario`, `V3/retornaVeiculosMapa`, `V3/buscarParadasPorLinhaComCoordenadas`, `V3/buscarPrevisoes`, `V3/retornaQroLinha` e outros. Contratos e campos: [relatório da análise do APK](APK-GOBUS-1.29.1.2.md).
 
-**Status operacional: pendente.** Descoberta no APK não equivale a resposta do servidor, nem comprova que a base pertence apenas a Canoas. `CAN` é indício presente no layout, mas `siuMobileCidade` deve vir de `cidadesApp`. Não foram recuperados dados municipais de GPS, paradas nem geometria. O adaptador `pipeline/transporte/gobus.py` faz interpretação offline, sem acessar a rede. O utilitário `scripts/gobus_extract.py` recebe arquivo JSONP salvo legitimamente; não publica dados automaticamente.
+**Resultados operacionais observados, sem publicação automática:** `cidadesApp` retornou lista de cidades vazia; `buscarLinhas` retornou 1.070 registros da praça MPA; `V3/cidadesLinhas/MPA/retornoJSONCidadesLinhas` confirmou a relação `CANOAS → codcid 4`. O filtro `praca=MPA` e `codcid=4` identificou 204 linhas TACOM. Destas, 72 registros apresentaram código `sgl` exato candidato ao catálogo NGS de 81 IDs. Uma linha de teste, `05006`, retornou 64 paradas georreferenciadas coerentes com a região e sete previsões consultadas em uma parada, mas não confirmou ID de itinerário ativo para essa linha.
+
+Consultas e normalização ficam nos scripts de sondagem de catálogo e geografia; relatórios e controles em [GOBUS-HOMOLOGACAO.md](GOBUS-HOMOLOGACAO.md). **Trajetos completos, GPS, ETA em produção e redistribuição ao público permanecem pendentes de validação.** As URLs legadas são HTTP, portanto não devem transportar credenciais ou alimentar diretamente a aplicação pública.
 
 Geometria de itinerário: `coordX`=longitude, `coordY`=latitude, em ordem; conversão para GeoJSON LineString não certifica vínculo entre os IDs SIU e os códigos NGS do catálogo atual. A telemetria vista pelo cliente não comprova timestamp GPS de origem. O backend operacional e os arquivos PMTiles continuam sujeitos a homologação separada.
 
