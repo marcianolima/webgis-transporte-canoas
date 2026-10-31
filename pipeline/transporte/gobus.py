@@ -131,3 +131,14 @@ def predictions(raw: str) -> list[dict[str, Any]]:
         raise ValueError('Previsões inválidas')
     return [{k: row.get(k) for k in ('sgLin','prev','numVeicGestor','codItinerario','tpAcess')}
             for row in data['previsoes'] if isinstance(row, dict) and row.get('sgLin') != 'Sem Dados']
+
+def cities(raw: str) -> list[dict[str, str]]:
+    """Valida cidades TACOM; suporta string ou lista JSON legado, sem eval."""
+    source = payload(raw).get('cidade')
+    values = legacy_rows(source)
+    result = []
+    for row in values:
+        code = str(row.get('sg', '')).strip().upper()
+        if code and row.get('desc'):
+            result.append({'code': code, 'name': str(row['desc']).strip()})
+    return result
