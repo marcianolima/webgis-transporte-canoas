@@ -9,7 +9,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
-from .gobus import lines, stops, itinerary, cities
+from .gobus import lines, stops, itinerary, cities, line_cities
 from .geo import valid_coordinate
 
 MUNICIPALITY = '4304606'
@@ -41,21 +41,35 @@ def stage(manifest: dict, *, source_dir: Path, ngs_network: dict) -> dict:
     if not isinstance(ngs_network.get('routes'), list):
         raise ValueError('Catálogo NGS inválido')
 
-    city_text, city_sha = _read(source_dir, manifest['cities_file'])
-    registered = cities(city_text)
-    if not any(r['code'] == 'CAN' and 'CANOAS' in r['name'].upper() for r in registered):
-        raise ValueError('Resposta TACOM não confirma cidade Canoas/CAN')
+    # MPA usa o código NUMÉRICO codcid para cidades de linhas. O campo
+    # praca='MPA' sozinho não indica que um registro seja de Canoas.
+    evidence=[]
+    canoas_city_id=None
+    if manifest.get('line_cities_file'):
+        raw, city_sha = _read(source_dir, manifest['line_cities_file'])
+        candidates=[x for x in line_cities(raw) if x['name'].upper().strip()=='CANOAS']
+        expected=str(manifest.get('canoas_city_id', ''))
+        if len(candidates)!=1 or candidates[0]['city_id'] != expected:
+            raise ValueError('Código numérico codcid/Canoas não confirmado pela TACOM')
+        canoas_city_id=expected
+        evidence.append({'kind':'cidades_linhas','sha256':city_sha,'canoas_city_id':expected})
+    elif manifest.get('cities_file'):
+        raw, city_sha = _read(source_dir, manifest['cities_file'])
+        registered=cities(raw)
+        if not any(r['code']=='CAN' and 'CANOAS' in r['name'].upper() for r in registered):
+            raise ValueError('Resposta TACOM não confirma cidade Canoas/CAN')
+        evidence.append({'kind':'cidades','sha256':city_sha})
+    else:
+        raise ValueError('Necessária resposta de cidades ou cidades_linhas validada')
 
     line_text, line_sha = _read(source_dir, manifest['lines_file'])
-    source_lines = {str(row['cod']): row for row in lines(line_text)}
+    source_lines = {str(row['cod']): row for row in lines(line_text)
+                    if canoas_city_id is None or str(row.get('codcid', ''))==canoas_city_id}
     ngs_routes = {str(row['id']): row for row in ngs_network['routes']}
     geo = []
     all_stops = {}
     seen_itineraries = {}
-    evidence = [
-        {'kind': 'cidades', 'sha256': city_sha},
-        {'kind': 'linhas', 'sha256': line_sha}
-    ]
+    evidence.append({'kind': 'linhas', 'sha256': line_sha})
     mappings = []
     for item in manifest['mapping']:
         source_id = str(item.get('siu_line_id', ''))
