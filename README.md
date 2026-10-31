@@ -6,7 +6,13 @@ Plataforma de informação e análise do transporte coletivo municipal de Canoas
 
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
-[Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Cobertura e cartografia 0.4.0](docs/COBERTURA-PARADAS.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
+[Integração experimental de veículos 0.5](docs/GOBUS-LIVE.md) · [Ofício técnico à TACOM/Sogal](docs/OFICIO-TACOM-GPS.md) · [Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Cobertura e cartografia 0.4.0](docs/COBERTURA-PARADAS.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
+
+## Próxima evolução experimental — posições reais GoBus (não ativadas no Pages)
+
+A base `0.4.0` foi preservada. Foi desenvolvido `pipeline/transporte/gobus_live.py`, que lê **exclusivamente** previsões de paradas já inventariadas e depois posições de itinerários observados, com até 16 GET/ciclo e pelo menos 15 s entre chamadas. O serviço TACOM não expõe timestamp GPS de origem nessa estrutura: todo registro novo é identificado como `time_basis=client_fetch`, sem velocidade observada; `SC`, `SG`, orientação em octantes (Norte ainda não confirmado) e `stale_polls` são preservados. A ligação SIU→NGS segue como referência não homologada.
+
+Também existem worker persistente opt-in no Docker, auditoria `audit-0.2.0`, API com campos temporais e limite de acesso, hook de consulta HTTPS que respeita visibilidade da aba, símbolos de veículo MapLibre/Leaflet e novos testes de regressão. **Nenhuma posição ou ETA foi simulada ou publicada.** A fonte HTTP legada exige canal de integração e direitos de redistribuição revisados antes de `PUBLIC_POSITIONS_ENABLED=true`. Ver [manual de implantação e limitações](docs/GOBUS-LIVE.md).
 
 ## Cartografia TACOM — 31/10/2026
 
