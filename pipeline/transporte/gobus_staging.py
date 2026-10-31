@@ -30,8 +30,9 @@ def _read(root: Path, name: str) -> tuple[str, str]:
 def stage(manifest: dict, *, source_dir: Path, ngs_network: dict) -> dict:
     if manifest.get('municipality_code') != MUNICIPALITY:
         raise ValueError('Escopo municipal deve ser 4304606')
-    if manifest.get('city') != 'CAN':
-        raise ValueError('Cidade CAN deve estar homologada para esta importação')
+    expected_group='MPA' if manifest.get('line_cities_file') else 'CAN'
+    if manifest.get('city') != expected_group:
+        raise ValueError('Praça da fonte não corresponde ao cadastro de cidades')
     if manifest.get('authorization_confirmed') is not True:
         raise ValueError('Autorização técnica deve estar registrada na entrada')
     if manifest.get('city_confirmed') is not True:
@@ -49,7 +50,7 @@ def stage(manifest: dict, *, source_dir: Path, ngs_network: dict) -> dict:
         raw, city_sha = _read(source_dir, manifest['line_cities_file'])
         candidates=[x for x in line_cities(raw) if x['name'].upper().strip()=='CANOAS']
         expected=str(manifest.get('canoas_city_id', ''))
-        if len(candidates)!=1 or candidates[0]['city_id'] != expected:
+        if expected != '4' or len(candidates)!=1 or candidates[0]['city_id'] != expected:
             raise ValueError('Código numérico codcid/Canoas não confirmado pela TACOM')
         canoas_city_id=expected
         evidence.append({'kind':'cidades_linhas','sha256':city_sha,'canoas_city_id':expected})
@@ -64,7 +65,7 @@ def stage(manifest: dict, *, source_dir: Path, ngs_network: dict) -> dict:
 
     line_text, line_sha = _read(source_dir, manifest['lines_file'])
     source_lines = {str(row['cod']): row for row in lines(line_text)
-                    if canoas_city_id is None or str(row.get('codcid', ''))==canoas_city_id}
+                    if canoas_city_id is None or (str(row.get('codcid', ''))==canoas_city_id and row.get('praca')=='MPA')}
     ngs_routes = {str(row['id']): row for row in ngs_network['routes']}
     geo = []
     all_stops = {}
