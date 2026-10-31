@@ -20,7 +20,7 @@ Horários são preservados na ordem de origem. Transição 23h → 00h no final 
 
 ## Motor operacional preparado
 
-Versão: `audit-0.1.0`. Não há execução homologada sobre GPS real de Canoas. A bateria de testes usa dados sintéticos isolados.
+Versão: `audit-0.2.0`. Não há execução homologada sobre GPS real de Canoas. A bateria de testes usa dados sintéticos isolados.
 
 | Regra | Requisitos e limiar | Resultado |
 | --- | --- | --- |
@@ -34,6 +34,14 @@ Versão: `audit-0.1.0`. Não há execução homologada sobre GPS real de Canoas.
 O worker executa consistência temporal, saltos, conflitos e movimentos interrompidos. Não há extração automática homologada de passagens, map matching, associação a viagens, ETA, detecção de comboios, velocidade comercial, tempo de percurso, trechos lentos ou comparação contratual. A função de intervalos recebe passagens já identificadas; não recebe GPS bruto. A regra de afastamento não executa no worker sem um shape válido e sua dimensão temporal.
 
 Toda ocorrência preserva evidências e versão do algoritmo e marca `is_infraction=false`. “Confirmada” só pode ser registrada em revisão humana autenticada e fundamentada; não é emitida pelo motor. Um parecer administrativo deve conferir o suporte documental necessário ao caso.
+
+### Registros de posição obtida por consulta (`time_basis=client_fetch`)
+
+No contrato TACOM/SIU Mobile investigado não existe timestamp comprovado da **medição GPS de origem**. Para ingestão técnica compatível, os campos `observed_at=fetched_at` representam a **hora da resposta recebida**, jamais a hora da fixação de coordenadas embarcada. Guardam-se separadamente `source_observed_at=null`, `signal_status` e `stale_polls`; coordenada repetida ou indicação `SC`/`SG` não permite inferir imobilização, falha ou cancelamento.
+
+O código de direção recebido é um **octante 0–7**, convertido para múltiplos de 45°. A hipótese de que 0 corresponde ao Norte não está homologada; em `SC` e `SG`, `bearing=null`. Não calcular velocidade observada a partir do intervalo entre consultas. Saltos, movimento interrompido e desvios baseados nesses timestamps são **inconclusivos**, mesmo quando a distância em metros possa ser calculada. A relação SIU→NGS de referência não comprova vigência, sentido ou variante autorizada.
+
+O backend disponibiliza no máximo três minutos de registros por horário da consulta e expõe `time_basis` no retorno. A fonte só passa a `status=reference` mediante autorização explícita de divulgação e implantação em HTTPS. `status=available` fica reservado à homologação integral da fonte. O frontend não consulta diretamente a TACOM.
 
 ## Análise territorial
 
