@@ -53,6 +53,15 @@ def discover(opener, sleep=time.sleep):
         raise ValueError('cidades:invalid_schema') from None
     target=[c for c in registered if c['code']=='CAN' and 'CANOAS' in c['name'].upper()]
     if len(target)!=1:
+        source=payload(raw_cities)
+        print(json.dumps({
+            'catalogue_diagnostic':True,
+            'city_entries_count':len(registered),
+            'city_codes':sorted({c['code'] for c in registered})[:30],
+            'has_canoas_name':any('CANOAS' in c['name'].upper() for c in registered),
+            'response_fields':sorted(source.keys())[:15],
+            'cidade_type':type(source.get('cidade')).__name__,
+        },ensure_ascii=False),file=sys.stderr)
         raise ValueError('cidades:CAN_not_confirmed')
     sleep(2)
     raw_lines=checked_fetch(opener,'linhas')
