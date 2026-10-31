@@ -46,7 +46,7 @@ def test_authenticated_queries_and_exports(store,sample,monkeypatch):
     assert c.get('/internal/export',params=query|{'format':'exe'},headers=headers).status_code==422
 
 def test_public_expiry_and_homologation(store,sample,monkeypatch):
-    monkeypatch.setenv('SOURCE_HOMOLOGATED','true');store.insert([sample]);c=TestClient(create_app(store))
+    monkeypatch.setenv('SOURCE_HOMOLOGATED','true');monkeypatch.setenv('PUBLIC_POSITIONS_ENABLED','true');store.insert([sample]);c=TestClient(create_app(store))
     assert len(c.get('/v1/vehicles').json()['vehicles'])==1
     assert 'payload' not in c.get('/v1/vehicles').text
 
@@ -98,3 +98,26 @@ def test_public_vehicle_api_has_rate_limit(store,monkeypatch):
     response=c.get('/v1/vehicles')
     assert response.status_code==429
     assert response.headers['Retry-After']=='60'
+
+
+def test_source_homologation_never_bypasses_publication_opt_in(store,sample,monkeypatch):
+    monkeypatch.setenv('SOURCE_HOMOLOGATED','true')
+    monkeypatch.setenv('PUBLIC_POSITIONS_ENABLED','false')
+    store.insert([sample])
+    result=TestClient(create_app(store)).get('/v1/vehicles').json()
+    assert result['status']=='unavailable'
+    assert result['vehicles']==[] and result['generated_at'] is None
+
+
+def test_unverified_client_fetch_never_claimed_as_gps_homologated(store,sample,monkeypatch):
+    monkeypatch.setenv('SOURCE_HOMOLOGATED','true')
+    monkeypatch.setenv('PUBLIC_POSITIONS_ENABLED','true')
+    store.insert([sample | {
+        'time_basis':'client_fetch',
+        'fetched_at':sample['observed_at'],
+        'source_observed_at':None,
+        'route_relation':'reference_not_homologated'
+    }])
+    result=TestClient(create_app(store)).get('/v1/vehicles').json()
+    assert result['status']=='reference'
+    assert result['vehicles'][0]['time_basis']=='client_fetch'
