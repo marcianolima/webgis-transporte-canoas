@@ -6,7 +6,7 @@ Plataforma de informação e análise do transporte coletivo municipal de Canoas
 
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
-[Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
+[Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
 
 ## Dados efetivamente obtidos
 
@@ -41,9 +41,11 @@ Bases locais: **18 bairros oficiais** reutilizados do GeoCanoas/WebGIS Empreende
 
 O aplicativo `com.tacom.canoas.gobus` foi identificado na loja TACOM; versão 1.31.3 observada no HTML obtido nesta execução. A documentação de terceiros da família SIU foi investigada. Uma resposta BHZ foi validada como **Belo Horizonte** e excluída de Canoas. O código `GOBUS` mencionado nessa referência não foi considerado confirmação de API municipal.
 
-**Novo resultado da análise de 30/10/2026:** APK 1.29.1.2 fornecido pelo operador e inspecionado estaticamente. Confirmados Cordova, base configurada `mpa.siumobile.com.br:6060`, endpoints V3 para itinerário geográfico, paradas, posições, ETA e horários, códigos de retorno e campos utilizados pelo aplicativo. Integração offline de parsing preparada em `pipeline/transporte/gobus.py` e nove testes automatizados em `tests/test_gobus.py`. O código do app consulta posições em intervalos de 6 s, mas isto não autoriza coleta nessa frequência.
+**Engenharia reversa do APK 1.29.1.2 e validação de serviços em 30/10/2026:** confirmado Cordova, host `mpa.siumobile.com.br:6060` (HTTP legado), rotinas JSONP de linhas, cidades, paradas geográficas, itinerários, veículos e previsões. Em sondagens GET autorizadas de leitura, o host respondeu e o catálogo geral apresentou **1.070 registros da praça MPA** de **14 códigos de município**. O serviço `V3/cidadesLinhas/MPA` identificou **Canoas como `codcid=4`**. Filtragem por esse código resultou em **204 registros de linhas TACOM**; **72 registros** tinham `sgl` coincidente com o catálogo Sogal/NGS de 81 IDs (apenas candidaturas ao cruzamento). Na amostra de uma linha com código `05006`, foram retornadas **64 paradas georreferenciadas** coerentes com o envelope de Canoas e **7 previsões** para uma parada consultada. O itinerário completo não foi obtido nessa amostra porque a previsão não trouxe relação ativa da linha selecionada.
 
-**Ainda não comprovado:** resposta do serviço para Canoas, código de cidade validado por `cidadesApp`, vínculo entre IDs de itinerário SIU e linhas NGS, timestamp de GPS de origem, limites/autorização de consulta e redistribuição. A tentativa de resolver o host configurado falhou no ambiente de análise; nenhum dado GPS/parada/shape municipal foi obtido. A aplicação continua a não inventar rotas ou posições. [Relatório técnico](docs/APK-GOBUS-1.29.1.2.md).
+**Escopo desta versão:** os dados TACOM obtidos em testes pontuais **não foram publicados** como cartografia oficial, GPS ou ETA no frontend. O mapa PMTiles mantém **0 percursos e 0 paradas importados** até revisão de codificação, direção, variantes, vigência e condições de redistribuição. Scripts de consulta controlada, validação `MPA/codcid=4`, staging offline, importadores de trajetos/paradas e testes estão no repositório. [Relatório de homologação TACOM](docs/GOBUS-HOMOLOGACAO.md) · [Análise do APK](docs/APK-GOBUS-1.29.1.2.md).
+
+**Ainda pendente:** vínculo SIU→NGS homologado para itinerários e sentidos, geometria de linha completa, cobertura e atualização das paradas, canal HTTPS e limites do fornecedor, timestamp original e contrato de GPS. A obtenção de uma resposta de API de leitura não autoriza concluir que a telemetria esteja apta à auditoria operacional.
 
 A integração real desta versão usa **Sogal/NGS**, cujo portal expõe cadastro, datas, horários e logradouros sem autenticação nas consultas observadas. Catálogo de [endpoints e contratos](docs/ENDPOINTS.md). Google Play, Apple, Sogal e NGS são fontes primárias; a referência SIU de Bruno Armanelli é atribuída e não foi copiada.
 
@@ -74,7 +76,7 @@ PYTHONPATH=pipeline .venv/bin/pytest -q
 PYTHONPATH=pipeline .venv/bin/python scripts/validate_public.py
 ```
 
-Resultado local: **65 testes Python e 23 testes TypeScript/React aprovados**, lint e build de produção aprovados. Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
+Na base anterior foram aprovados **65 testes Python e 23 testes TypeScript/React**. Novas rotinas de TACOM e testes foram acrescentados; o resultado da revisão corrente deve ser conferido na execução correspondente do [GitHub Actions](https://github.com/marcianolima/webgis-transporte-canoas/actions). Testes abrangem JSON/JSONP, legado, horários/madrugada, contratos NGS com amostras reais, projeção, coordenadas, anomalias, cache/retry, escopo municipal, deduplicação, histórico, autenticação, exportação, navegação e filtros. Consulte a [homologação](docs/HOMOLOGACAO.md) para limites dos testes visuais e da infraestrutura.
 
 ## Atualização dos dados e publicação
 
