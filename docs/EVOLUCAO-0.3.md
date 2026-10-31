@@ -41,7 +41,7 @@ Todas as feições são `status=reference`, `homologated=false`. O sentido, a va
 - Ficha da linha com mapa e download GeoJSON do percurso.
 - Página de paradas com busca, filtros de linha/bairro, paginação, foco no mapa e exportação CSV/GeoJSON.
 - Identificação TACOM correta: removidos os rótulos e links OSM que não correspondiam à nova fonte.
-- Estatísticas territoriais calculadas sobre a **amostra**, sem extrapolar atendimento total, população coberta ou operação efetiva. Extensão é união geométrica dos traçados, sem duplicar segmentos coincidentes.
+- Estatísticas territoriais calculadas sobre a **amostra**, sem extrapolar atendimento total, população coberta ou operação efetiva. Extensão é a união geométrica exata dos traçados. Segmentos coincidentes são unidos; traçados próximos ou paralelos com coordenadas diferentes continuam distintos. Não é extensão viária nem rede autorizada.
 
 ## Operação e atualização
 

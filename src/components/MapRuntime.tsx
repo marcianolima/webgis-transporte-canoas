@@ -71,6 +71,7 @@ export default function MapRuntime(props: RuntimeProps) {
           ) +
           " · conferir vigência";
         node.append(title, p);
+        if(f.properties?.source_route_name){const name=document.createElement('p');name.textContent='Nome na API: '+String(f.properties.source_route_name);node.append(name)}
         const detail = document.createElement("p");
         detail.textContent =
           "Itinerário " +

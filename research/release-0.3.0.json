@@ -1,0 +1,41 @@
+{
+  "verified_at": "2026-10-31T11:20:19.052517+00:00",
+  "source_commit": "69bc2ba160f303bca8ca96c5cbc38144dd3a58f6",
+  "workflow_run": 41196047057,
+  "build": "success",
+  "deploy": "success",
+  "public_url": "https://marcianolima.github.io/webgis-transporte-canoas/#mapa",
+  "browser_observations": {
+    "map_status": "Base local PMTiles carregada",
+    "routes_with_geometry": 35,
+    "reference_stops": 215,
+    "selected_route_codes": [
+      "5000",
+      "5001"
+    ],
+    "svg_paths_after_selection": 10
+  },
+  "archive": {
+    "bytes": 479399,
+    "sha256": "37e2ea30df8b015661d2fc09c972f57f9bb8bc216c5c62bbc9812f47f2bdceb3",
+    "layers": {
+      "bairros": 18,
+      "setores": 659,
+      "limite": 1,
+      "linhas": 52,
+      "paradas": 215
+    }
+  },
+  "tests": {
+    "python": 111,
+    "typescript_react": 25,
+    "lint": "passed",
+    "build": "passed"
+  },
+  "limitations": [
+    "Referência da API; não homologação operacional",
+    "Sete itinerários em revisão de borda",
+    "Sem coleta GPS contínua",
+    "Viewport móvel interno; não aparelho físico"
+  ]
+}

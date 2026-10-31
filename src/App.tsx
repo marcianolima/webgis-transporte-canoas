@@ -1345,7 +1345,7 @@ function App() {
                             <th>Paradas da amostra</th>
                             <th>Paradas/km²</th>
                             <th>Área até 300 m³</th>
-                            <th>Linhas na amostra</th><th>Traçados únicos (km)</th>
+                            <th>Linhas na amostra</th><th>União geométrica (km)</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1369,7 +1369,7 @@ function App() {
                     <p className="caption">
                       ² Atributo do arquivo de bairros de referência. Não
                       recalculado por distribuição de área. ³ Buffer euclidiano,
-                      não percurso a pé nem população atendida. Traçados únicos são a união geométrica da amostra, sem duplicar segmentos coincidentes; não representam a rede autorizada completa.
+                      não percurso a pé nem população atendida. A extensão é a união geométrica exata da amostra. Traçados próximos ou paralelos com coordenadas diferentes continuam distintos; não representa extensão viária nem rede autorizada completa.
                     </p>
                   </Panel>
                   <Panel title="Limitações da análise">

@@ -2,7 +2,7 @@
 
 ## Revisão 0.3.0
 
-52 itinerários reais de 35 linhas e 215 paradas TACOM em PMTiles, como referência não homologada operacionalmente. 111 testes Python e 25 TypeScript/React; lint e build locais aprovados. Diagnóstico, correção da amostra de Viamão, métricas, qualidade e limites em [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). A comprovação do deploy corresponde ao run associado ao commit final; registros a seguir são históricos das revisões anteriores.
+52 itinerários reais de 35 linhas e 215 paradas TACOM em PMTiles, como referência não homologada operacionalmente. 111 testes Python e 25 TypeScript/React; lint e build locais aprovados. Diagnóstico, correção da amostra de Viamão, métricas, qualidade e limites em [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). Publicação da 0.3.0 verificada no commit `69bc2ba160f303bca8ca96c5cbc38144dd3a58f6`: [run 41196047057](https://github.com/marcianolima/webgis-transporte-canoas/actions/runs/41196047057), build e deploy concluídos com sucesso. Navegador público confirmou 35 linhas, 215 paradas, PMTiles carregado e desenho simultâneo de 5000/5001. Evidência em `research/release-0.3.0.json`. Os registros a seguir são históricos das revisões anteriores.
 
 
 ## Revisão 0.2.0: mapa PMTiles e seleção de linhas
