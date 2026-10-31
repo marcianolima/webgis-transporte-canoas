@@ -4,7 +4,7 @@
 
 **1.410 paradas**, mais 1.025, dos 1.433 IDs das 72 listas consultadas (98,39%). Outros 23 IDs retornaram posições fora da área de referência e foram separados para revisão; nenhuma consulta ficou pendente nesse recorte. Preservados os 385 IDs, 1.386 vínculos e os 57 itinerários anteriores. Duas rodadas com 386 respostas válidas e 416 usos de cache, sem falhas/retries. Mapas de paradas/km² e área a 300 m, completude e exportações por linha. [Relatório e limites](COBERTURA-PARADAS.md).
 
-Validação local: **128 testes Python, 30 TypeScript/React**, lint, build e dados públicos aprovados. Evidência em `research/stop-coverage-2026-10-31.json`. A conclusão do deploy remoto desta revisão será registrada após conferir o run correspondente. O recorte não constitui inventário municipal homologado nem monitoramento GPS.
+Validação local: **128 testes Python, 30 TypeScript/React**, lint, build e dados públicos aprovados. Evidência em `research/stop-coverage-2026-10-31.json`. Build e deploy remotos concluídos com sucesso no commit `29e4f037f3ec8416e8a988f1d8f9b5444dd7f4fa`, [run 41216297572](https://github.com/marcianolima/webgis-transporte-canoas/actions/runs/41216297572). O site público confirmou 1.410 marcadores SVG, PMTiles carregado e tema de paradas/km². O binário público e a leitura Range HTTP 206 foram conferidos contra o manifesto. Em viewport 390 × 844, menu ativo e filtro Industrial (23 paradas) passaram sem transbordamento horizontal. As exportações locais retornaram 72 linhas e 23 IDs excluídos, com cabeçalhos e motivos conferidos. O recorte não constitui inventário municipal homologado nem monitoramento GPS.
 
 
 ## Revisão 0.3.1 — retomada em 31/10/2026

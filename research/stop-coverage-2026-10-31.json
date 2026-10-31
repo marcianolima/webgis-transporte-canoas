@@ -204,5 +204,36 @@
     "files": 1203,
     "bytes": 1300226,
     "sha256": "243f80c7ebab8d767bf818ccb672c09dd0413a54ba4825585cc3f659918a2b84"
+  },
+  "publication": {
+    "commit": "29e4f037f3ec8416e8a988f1d8f9b5444dd7f4fa",
+    "workflow_run_id": 41216297572,
+    "build_job_id": 124581420762,
+    "deploy_job_id": 124581722323,
+    "build": "success",
+    "deploy": "success",
+    "public_map_url": "https://marcianolima.github.io/webgis-transporte-canoas/#mapa",
+    "public_svg_stop_markers": 1410,
+    "public_theme": "densidade-paradas",
+    "public_archive_verification": {
+      "archive_url": "https://marcianolima.github.io/webgis-transporte-canoas/data/transporte-canoas.pmtiles?v=a2462afe18808972",
+      "bytes": 826541,
+      "sha256": "a2462afe18808972a98c88a00f1e33b18b075dc3e84f32bf866bf95c422418aa",
+      "layers": {
+        "bairros": 18,
+        "setores": 659,
+        "limite": 1,
+        "linhas": 57,
+        "paradas": 1410
+      },
+      "range": {
+        "status": 206,
+        "content_range": "bytes 0-126/826541",
+        "bytes": 127
+      },
+      "exported_route_rows": 72,
+      "exported_excluded_stop_rows": 23
+    },
+    "exports_tested_in": "local_preview_main_frame"
   }
 }
