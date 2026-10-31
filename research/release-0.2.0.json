@@ -1,0 +1,18 @@
+{
+  "checked_at": "2026-10-31T00:05:08.795756+00:00",
+  "commit": "ea17ef1a932af83bb7bdc27388b6416ed8357b7b",
+  "run_id": 41147965947,
+  "range_status": 206,
+  "content_range": "bytes 0-126/263145",
+  "bytes": 263145,
+  "sha256": "3649e6b286f04e72fbdb8f5816bf7230f65be6a5f0d9f567d3c3a91c16b16fd1",
+  "layers": {
+    "bairros": 18,
+    "setores": 659,
+    "limite": 1,
+    "linhas": 0,
+    "paradas": 0
+  },
+  "route_geometry_count": 0,
+  "public_url": "https://marcianolima.github.io/webgis-transporte-canoas/"
+}

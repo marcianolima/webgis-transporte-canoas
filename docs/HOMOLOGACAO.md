@@ -12,7 +12,7 @@ QA visual: PMTiles de bairros/setores carregou no navegador; seleção de bairro
 
 GPS GoBus, ETA, cadastro geográfico e resultados de auditoria operacional continuam pendentes. O avanço no mapa não encerra a engenharia reversa TACOM. [Pendências da 1.0](VERSAO-1.0.md) e [operação PMTiles](MAPA-PMTILES.md).
 
-O estado do deploy desta revisão deve ser conferido no run associado ao commit final; os registros abaixo descrevem a publicação da 0.1.0 e não são prova do deploy da 0.2.0.
+Publicação 0.2.0 verificada: commit `ea17ef1a932af83bb7bdc27388b6416ed8357b7b`; [run 41147965947](https://github.com/marcianolima/webgis-transporte-canoas/actions/runs/41147965947), build e deploy concluídos com sucesso. A aplicação pública mostrou “Base local PMTiles carregada”, troca para setores e seleção da linha 5000 com aviso de geometria pendente. O arquivo público respondeu **HTTP 206**, `Content-Range: bytes 0-126/263145`; transferência completa de 263.145 bytes com SHA-256 `3649e6b286f04e72fbdb8f5816bf7230f65be6a5f0d9f567d3c3a91c16b16fd1`, igual ao manifesto. Evidência em `research/release-0.2.0.json` (31/10/2026 UTC; 30/10 em Brasília). Um ajuste posterior assegura aplicação das camadas MapLibre após criar as fontes, sem aguardar indevidamente o estado global de carregamento dos workers. Os registros abaixo descrevem a revisão anterior.
 
 ## Resultado da revisão anterior (0.1.0)
 

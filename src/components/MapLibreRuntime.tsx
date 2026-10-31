@@ -20,7 +20,7 @@ export default function MapLibreRuntime(
   latest.current = props;
   const apply = () => {
     const m = map.current;
-    if (!m?.isStyleLoaded()) return;
+    if (!m?.getSource("selected-area")) return;
     const p = latest.current;
     for (const name of ["bairros", "setores"])
       if (m.getLayer(name))
