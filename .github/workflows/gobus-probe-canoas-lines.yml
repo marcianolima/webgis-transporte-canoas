@@ -1,0 +1,26 @@
+name: GoBus TACOM · linhas municipais Canoas
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe-canoas-lines.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  identify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validar codcid e comparar código exato com NGS
+        env:
+          PYTHONPATH: pipeline:.
+        run: python scripts/gobus_probe_canoas_lines.py --autorizado --aceito-http
+      - name: Escopo
+        if: always()
+        run: |
+          echo "Duas consultas apenas de catálogo; códigos iguais são candidatos, não homologação." >> "$GITHUB_STEP_SUMMARY"
+          echo "Nenhuma consulta de veículo, GPS, cartão ou alarme." >> "$GITHUB_STEP_SUMMARY"
