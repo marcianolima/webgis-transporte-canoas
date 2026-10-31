@@ -114,6 +114,7 @@ def test_mpa_numeric_city_id_filters_other_municipalities(fixture):
           {'sucesso':True,'linhas':"[{'cod':'17','sgl':'05000','nom':'MATHIAS VELHO/CENTRO','codcid':4,'praca':'MPA'},{'cod':'20','sgl':'999','nom':'OUTRO','codcid':9,'praca':'MPA'}]"})
     manifest.pop('cities_file')
     manifest['line_cities_file']='cidades-linhas.jsonp'
+    manifest['city']='MPA'
     manifest['canoas_city_id']='4'
     assert stage(manifest,source_dir=src,ngs_network=network)['summary']['matched_route_count']==1
     manifest['mapping'][0]['siu_line_id']='20'
@@ -126,6 +127,7 @@ def test_mpa_rejects_unverified_city_code(fixture):
           {'sucesso':True,'cidade':["{'cod':'4','desc':'CANOAS'}"]})
     manifest.pop('cities_file')
     manifest['line_cities_file']='cidades-linhas.jsonp'
+    manifest['city']='MPA'
     manifest['canoas_city_id']='9'
     with pytest.raises(ValueError,match='não confirmado'):
         stage(manifest,source_dir=src,ngs_network=network)
