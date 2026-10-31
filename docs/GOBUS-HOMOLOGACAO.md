@@ -11,6 +11,7 @@ Situação: engenharia reversa estática do APK 1.29.1.2 concluída; os contrato
 | Sondas de catálogo | `scripts/gobus_probe_{lines,citylines,canoas_lines}.py` | Validam a praça MPA, município codcid=4 e candidatos ao cruzamento NGS |
 | Workflow de sondagem | `.github/workflows/gobus-probe*.yml` | Consultas limitadas, com resultados sanitizados no Actions |
 | Captura cartográfica | `scripts/gobus_capture_geography.py` | Até 12 GET geográficos por execução, com pausa de 3 segundos e validação prévia de praça MPA e codcid=4 |
+| Crosswalk para revisão | `pipeline/transporte/gobus_crosswalk.py` | Gera CSV de candidatos por códigos exatos sem autoaprovar sentido, variante ou vigência |
 | Preparação cartográfica | `pipeline/transporte/gobus_staging.py` | Vincula capturas SIU→NGS sob aprovação explícita e produz GeoJSON de revisão |
 | Importação de trajetos | `pipeline/transporte/import_shapes.py` | Publica percursos homologados mediante origem HTTPS e reconstrói PMTiles |
 | Importação de paradas | `pipeline/transporte/import_stops.py` | Valida, arquiva e publica pontos de parada mediante aprovação, reconstruindo PMTiles |
@@ -33,6 +34,20 @@ PYTHONPATH=pipeline python scripts/gobus_probe_catalogue.py --autorizado --aceit
 ```
 
 O comando reporta apenas estatísticas. Não grava o corpo em repositório público. Para validar uma resposta individual, use `scripts/verify_gobus_endpoint.py`, que salva o resultado no diretório ignorado `var/gobus/`.
+
+### Gerar CSV privado de correspondência candidato (revisão manual)
+
+Depois de salvar uma resposta de `V3/cidadesLinhas/MPA/retornoJSONCidadesLinhas` e outra de `buscarLinhas/retornoJSONListaLinhas` na pasta privada `var/gobus/`, gerar:
+
+```bash
+PYTHONPATH=pipeline python -m transporte.gobus_crosswalk \
+  --cidades var/gobus/cidades-linhas.jsonp \
+  --linhas var/gobus/linhas.jsonp \
+  --network public/data/network.json \
+  --output var/gobus/revisao-crosswalk.csv
+```
+
+Os nomes dos arquivos são ilustrativos; utilizar os nomes efetivos das capturas obtidas. O CSV inclui identificador de linha TACOM, código `sgl`, nome, candidato `ngs_route_id` e campos **`crosswalk_approved=false`**, `direction_review=pending`, `variant_review=pending`, `validity_review=pending`. A coincidência exata dos códigos **não aprova itinerários e não justifica inserir linhas no mapa**.
 
 ## 2. Captura geográfica limitada
 
