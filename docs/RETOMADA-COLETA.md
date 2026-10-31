@@ -26,7 +26,7 @@ Novas tentativas ocorrem somente em erros transitórios, com backoff, e consomem
 
 ## Retomada e preservação
 
-1. Antes da consulta real, foi criado um checkpoint privado de **212 arquivos, 7.252.404 bytes**, com hashes, incluindo capturas, cache e produtos publicados. O GitHub permanecia no commit `b12c62fd94fb983453dfc28bbba5e29f63d4a8b2`.
+1. Antes da consulta real, foi criado um checkpoint privado de **212 arquivos, 7.252.404 bytes**, com hashes, incluindo capturas, cache e produtos publicados. A comparação posterior confirmou a conservação de todas as 135 capturas brutas anteriores (212 capturas distintas após a coleta). Uma cópia privada recuperável reuniu 429 arquivos, com CRC e SHA-256 de cada entrada verificados; ela não foi publicada no GitHub. O GitHub permanecia no commit `b12c62fd94fb983453dfc28bbba5e29f63d4a8b2`.
 2. Cada resposta válida é arquivada por identidade/hash em `var/gobus/source-history/`. O cache é atualizado por substituição de arquivo completo, depois de validar o JSONP. Timeout, erro de esquema ou gravação incompleta não substitui a captura anterior.
 3. A repetição do mesmo comando aproveita o cache válido: 24 h para cadastros/geometrias e 5 min para previsões. Previsões expiradas são consultadas de novo; o histórico anterior permanece. Não remover o diretório para retomar.
 4. `var/gobus/runs/` registra progresso por requisição, cache, tentativas, limites e estado final. Se o processo morrer abruptamente, pode restar estado `running`; ele não é prova de sucesso. A retomada depende de conservar o disco privado.

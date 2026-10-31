@@ -35,7 +35,13 @@
     "previous_shape_ids_preserved": 52,
     "previous_stop_ids_preserved": 215,
     "previous_stop_route_links_preserved": 602,
-    "all_previous_ids_and_links_preserved": true
+    "all_previous_ids_and_links_preserved": true,
+    "previous_distinct_raw_captures": 135,
+    "current_distinct_raw_captures": 212,
+    "lost_raw_captures": 0,
+    "private_backup_files": 429,
+    "private_backup_sha256": "d9663ff499e866042e43ee53b9acb35e805c67cb55424e31a3dc860ba875739d",
+    "private_backup_file_hashes_verified": true
   },
   "published": {
     "itineraries": 57,
@@ -52,5 +58,47 @@
     "build": "passed",
     "public_data_validation": "passed"
   },
-  "scope": "Referência estática parcial da API; GPS/ETA contínuos não homologados; capturas brutas privadas."
+  "scope": "Referência estática parcial da API; GPS/ETA contínuos não homologados; capturas brutas privadas.",
+  "publication": {
+    "commit": "1edc9b02b7c329645c5bdddf0bdd80227eb44de7",
+    "workflow_run_id": 41199492831,
+    "build_job_id": 124532290537,
+    "deploy_job_id": 124532597032,
+    "build": "success",
+    "deploy": "success",
+    "public_map_url": "https://marcianolima.github.io/webgis-transporte-canoas/#mapa",
+    "archive_verification": {
+      "url": "https://marcianolima.github.io/webgis-transporte-canoas/data/transporte-canoas.pmtiles",
+      "bytes": 541915,
+      "sha256": "839b79cea602df391b3f96246680b8b7ced7a9310916d857edb30224711d4df3",
+      "layers": {
+        "bairros": 18,
+        "setores": 659,
+        "limite": 1,
+        "linhas": 57,
+        "paradas": 385
+      },
+      "range": {
+        "status": 206,
+        "content_range": "bytes 0-126/541915",
+        "bytes": 127
+      }
+    },
+    "browser": {
+      "public_summary_routes": 36,
+      "public_summary_stops": 385,
+      "pmtiles_loaded": true,
+      "simultaneous_selected_routes": [
+        "05000",
+        "05116"
+      ],
+      "rendered_route_paths": 3,
+      "route_colors": [
+        "#008773",
+        "#cf493f"
+      ],
+      "local_stop_filter_05116_rows": 24,
+      "horizontal_overflow_desktop": false
+    }
+  }
 }

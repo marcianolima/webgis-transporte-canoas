@@ -4,7 +4,7 @@
 
 A retomada da API respondeu HTTP 200; coleta concluída com 77 requisições, 114 usos de cache e nenhuma falha. Publicação mesclada: **57 itinerários de 36 linhas e 385 paradas**, mantendo todos os IDs e vínculos anteriores. PMTiles com 541.915 bytes e 28 tiles. Oito percursos sob revisão de borda. [Resultado, proteção e limites](RETOMADA-COLETA.md).
 
-Validação local: **123 testes Python e 25 TypeScript/React**, lint, build e validação dos dados públicos aprovados. A aprovação remota e o deploy desta revisão serão conferidos pelo run correspondente; build local não comprova publicação. GPS e infraestrutura operacional continuam pendentes.
+Validação local: **123 testes Python e 25 TypeScript/React**, lint, build e validação dos dados públicos aprovados. Build e deploy remotos concluídos com sucesso no commit `1edc9b02b7c329645c5bdddf0bdd80227eb44de7`, [run 41199492831](https://github.com/marcianolima/webgis-transporte-canoas/actions/runs/41199492831). O navegador público confirmou PMTiles carregado, 36 linhas, 385 paradas e três traçados simultâneos das linhas 5000/5116; filtro local da 5116 retornou 24 paradas. O arquivo público completo e a leitura Range foram conferidos contra o SHA-256 do manifesto. Evidência em `research/network-retry-2026-10-31.json`. GPS e infraestrutura operacional continuam pendentes.
 
 
 ## Revisão 0.3.0
