@@ -1,0 +1,26 @@
+name: GoBus TACOM · amostra geográfica por previsões
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe-itinerary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Consultar amostra limitada de cinco paradas da linha 05006
+        env:
+          PYTHONPATH: pipeline:.
+        run: python scripts/gobus_probe_itinerary_geometry.py --autorizado --aceito-http
+      - name: Registrar restrições da amostra
+        if: always()
+        run: |
+          echo "Até nove leituras GET autorizadas; nenhuma consulta contínua de GPS ou escrita." >> "$GITHUB_STEP_SUMMARY"
+          echo "Não são publicados dados brutos, identificadores dos ônibus, nem geometrias sem revisão." >> "$GITHUB_STEP_SUMMARY"
