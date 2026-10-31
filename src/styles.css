@@ -2405,3 +2405,32 @@ tbody tr:hover {
 .stop-coverage td button {text-align:left;white-space:normal;}
 .map-filter-note {padding:0 14px;margin:0 0 10px;}
 @media(max-width:600px) {.stop-coverage-metrics{grid-template-columns:1fr;gap:8px}.stop-coverage-metrics>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px}.stop-coverage-metrics span{margin:0;max-width:55%}.stop-coverage-metrics strong{font-size:1.3rem;text-align:right}.stop-coverage-metrics small{display:block}.stop-coverage .panel-title{align-items:flex-start;flex-direction:column}}
+
+/* Indicadores de veículos TACOM: posição consultada, não GPS temporizado na fonte. */
+.vehicle-marker {
+  background: none;
+  border: 0;
+}
+.vehicle-marker-core {
+  display: flex;
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  align-items: center;
+  justify-content: center;
+  background: #13766a;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  box-shadow: 0 1px 5px #102c2b66;
+}
+.vehicle-marker-core.vehicle-marker-sc { background: #63757a; }
+.vehicle-marker-core.vehicle-marker-sg { background: #a86c1c; }
+.leaflet-marker-icon.vehicle-marker:focus-visible {
+  outline: 3px solid #f6b44e;
+  outline-offset: 3px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-marker-core { transition: none; }
+}
