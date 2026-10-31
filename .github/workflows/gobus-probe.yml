@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - '.github/workflows/gobus-probe.yml'
+      - 'scripts/gobus_probe_catalogue.py'
   workflow_dispatch:
 
 permissions:
