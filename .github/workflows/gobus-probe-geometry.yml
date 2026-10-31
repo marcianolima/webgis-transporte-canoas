@@ -1,0 +1,26 @@
+name: GoBus TACOM · amostra de itinerário municipal
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe-geometry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Amostra controlada de um único código de linha
+        env:
+          PYTHONPATH: pipeline:.
+        run: python scripts/gobus_probe_sample_geometry.py --autorizado --aceito-http --route-code 05006
+      - name: Registrar limites
+        if: always()
+        run: |
+          echo "Até 5 GETs autorizados e espaçados, sem polling nem armazenamento de resposta operacional." >> "$GITHUB_STEP_SUMMARY"
+          echo "Sem publicação de GPS, de horários de veículo ou de geometria não homologada." >> "$GITHUB_STEP_SUMMARY"
