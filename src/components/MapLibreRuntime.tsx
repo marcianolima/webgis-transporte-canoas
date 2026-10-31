@@ -13,6 +13,27 @@ import {
 import { stopPopup } from "../map-popups";
 import { currentVehicles, brDate, number } from "../data";
 import type { RuntimeProps } from "./MapRuntime";
+/** Ícone de direção criado localmente: sem dependência de glyphs ou requisições externas. */
+function addHeadingImage(m: maplibregl.Map) {
+  if (m.hasImage("gobus-heading")) return;
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 64;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.beginPath();
+  ctx.moveTo(32, 4);
+  ctx.lineTo(52, 48);
+  ctx.lineTo(32, 39);
+  ctx.lineTo(12, 48);
+  ctx.closePath();
+  ctx.fillStyle = "#ffffff";
+  ctx.strokeStyle = "#164744";
+  ctx.lineWidth = 5;
+  ctx.lineJoin = "round";
+  ctx.stroke();
+  ctx.fill();
+  m.addImage("gobus-heading", ctx.getImageData(0, 0, 64, 64));
+}
 export default function MapLibreRuntime(
   props: RuntimeProps & { onUnsupported: () => void },
 ) {
@@ -83,6 +104,14 @@ export default function MapLibreRuntime(
         id: v.vehicle_id,
         line: v.route_id,
         observed_at: v.observed_at,
+        fetched_at: v.fetched_at,
+        time_basis: v.time_basis ?? "source_gps",
+        signal_status: v.signal_status ?? "ok",
+        stale_polls: v.stale_polls ?? 0,
+        source_itinerary_id: v.source_itinerary_id || "",
+        route_relation: v.route_relation || "unknown",
+        bearing: v.bearing ?? 0,
+        has_bearing: typeof v.bearing === "number" && Number.isFinite(v.bearing),
       },
     }));
     (m.getSource("vehicles") as GeoJSONSource)?.setData({
@@ -235,12 +264,30 @@ export default function MapLibreRuntime(
         type: "circle",
         source: "vehicles",
         paint: {
-          "circle-radius": 7,
-          "circle-color": "#13766a",
+          "circle-radius": 9,
+          "circle-color": [
+            "match", ["get", "signal_status"],
+            "SC", "#737f84", "SG", "#bb7b25", "#13766a",
+          ],
           "circle-stroke-color": "#fff",
           "circle-stroke-width": 2,
         },
       });
+      addHeadingImage(m);
+      if (m.hasImage("gobus-heading"))
+        m.addLayer({
+          id: "vehicles-headings",
+          type: "symbol",
+          source: "vehicles",
+          filter: ["all", ["==", ["get", "has_bearing"], true], ["==", ["get", "signal_status"], "ok"]],
+          layout: {
+            "icon-image": "gobus-heading",
+            "icon-size": 0.38,
+            "icon-rotate": ["get", "bearing"],
+            "icon-rotation-alignment": "map",
+            "icon-allow-overlap": true,
+          },
+        });
       const bounds = geometryBounds(props.data.boundary.features);
       if (bounds) m.fitBounds(bounds, { padding: 25, duration: 0 });
       apply();
@@ -281,7 +328,9 @@ export default function MapLibreRuntime(
       const div = document.createElement("div");
       if (vehicles.length) {
         const p = vehicles[0].properties;
-        div.textContent = `Veículo ${p.id} · linha ${p.line} · ${brDate(p.observed_at, true)}`;
+        const signal = p.signal_status === "SC" ? "sem comunicação" : p.signal_status === "SG" ? "sem GPS" : "sinal recebido";
+        const age = Math.max(0, Math.floor((Date.now() - Date.parse(p.fetched_at)) / 1000));
+        div.textContent = `Veículo ${p.id} · linha de referência ${p.line} · consulta ${brDate(p.fetched_at, true)} (há ${age} s) · ${signal}. ${p.time_basis === "client_fetch" ? "Sem timestamp original do GPS; sentido e itinerário não homologados." : ""}`;
       } else {
         const f = findArea(latest.current.data, latest.current.style.theme, [
           event.lngLat.lng,
@@ -327,6 +376,10 @@ export default function MapLibreRuntime(
       if (b) m.fitBounds(b, { padding: 25, maxZoom: 14 });
     }
   }, [JSON.stringify(props.style), props.neighborhood, props.data.routeShapes]);
+  useEffect(() => {
+    apply();
+  }, [props.data.vehicles]);
+
   useEffect(() => {
     const m = map.current;
     const f = props.data.stops.features.find(
