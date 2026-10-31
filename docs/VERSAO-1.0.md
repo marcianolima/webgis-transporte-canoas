@@ -12,7 +12,7 @@ A versão publicada nesta revisão é **0.2.0**, com programação e território
 | Linhas/horários | 81 IDs e 4.990 saídas em cinco datas no snapshot de 30/10/2026 | Coleta NGS real; assegurar autorização/estabilidade operacional e conferir alterações |
 | Trajetos | Desenho, filtros e importador implementados; 0 linhas com geometria real | Obter GeoJSON/GTFS municipal com códigos, sentidos, variantes, origem e vigência; homologar |
 | Paradas | Pendente | Cadastro geográfico, sequência, atendimento e sentidos homologados |
-| GoBus/TACOM | Engenharia reversa operacional não concluída | APK legítimo ou documentação/acesso autorizado; confirmar hosts, código de Canoas, contrato e limites |
+| GoBus/TACOM | Engenharia reversa **estática do APK 1.29.1.2 concluída**; acesso operacional não homologado | Host e caminhos/estruturas identificados; confirmar retorno municipal de `cidadesApp`, sigla de cidade, condições de consulta, payload e timestamp de GPS. Ver [relatório](APK-GOBUS-1.29.1.2.md) |
 | GPS/ETA | Não homologados | Veículo, linha, sentido, timestamp de origem, atualização autorizada; validar ETA contra observações |
 | Histórico estático | SQLite implementado | Disco persistente e backup para continuidade; cache do Actions é apenas auxiliar |
 | Histórico GPS e backend | Código e infraestrutura preparados | Implantar Postgres/PostGIS, API, worker, TLS, monitoramento e restaurar backup em teste |
@@ -28,7 +28,7 @@ A versão publicada nesta revisão é **0.2.0**, com programação e território
 ## Prioridade de execução
 
 1. Solicitar ao responsável pela operação os percursos e paradas municipais com identificadores, sentidos e datas de vigência. O importador permite conferir e publicar geometria sem depender de concluir a análise do APK.
-2. Disponibilizar APK legítimo para análise estática ou documentação técnica/autorização de acesso da TACOM. Sem esse material, os endpoints da família SIU de outras cidades não comprovam a API de Canoas.
+2. **APK 1.29.1.2 recebido e analisado:** executar homologação autorizada dos contratos efetivamente encontrados, validar `cidadesApp`, escopo Canoas e correspondências SIU↔NGS. O APK confirma os caminhos, mas não prova que a API esteja acessível ou autorizada para ingestão.
 3. Homologar uma amostra real de GPS: timestamps, coordenadas, identificação, atraso, periodicidade e limites. Só então configurar e executar o worker contínuo.
 4. Implantar backend persistente, autenticação nominal e backups. Reprocessar histórico com versões de trajetos e algoritmos identificadas.
 5. Homologar indicadores com documentos e evidências operacionais, testar em campo e registrar aceite. Não inferir cancelamento ou infração da ausência de GPS.
