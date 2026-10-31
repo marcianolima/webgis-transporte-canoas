@@ -126,3 +126,66 @@ def test_private_paths_only(tmp_path):
     assert accepted.name=="live-feed.json"
     with pytest.raises(ValueError):
         private_path(tmp_path,tmp_path/"public/data/vehicles.json")
+
+
+def test_supplier_hourly_quota_stops_before_vehicle_request():
+    client = httpx.Client(transport=httpx.MockTransport(source))
+    c = LiveCollector(client, spacing=15, max_requests=6, max_per_hour=1,
+                      max_per_day=3, retries=0,
+                      clock=lambda:START, monotonic=lambda:0,
+                      sleep=lambda _:None, jitter=lambda:0)
+    result = c.once(INVENTORY, SHAPES, AREA, stop_queries=1, itinerary_queries=1)
+    assert result["vehicles"] == []
+    assert c.exhausted
+    assert result["diagnostics"]["requests"] == 1
+    assert result["diagnostics"]["requests_last_day"] == 1
+    resumed = LiveCollector(client, spacing=15, max_requests=6, max_per_hour=1,
+                            max_per_day=3, retries=0,
+                            state=c.state, clock=lambda:START + timedelta(minutes=1),
+                            monotonic=lambda:0, sleep=lambda _:None, jitter=lambda:0)
+    again = resumed.once(INVENTORY, SHAPES, AREA, stop_queries=1, itinerary_queries=1)
+    assert resumed.exhausted and again["diagnostics"]["requests"] == 0
+
+
+def test_http_429_stops_other_source_requests():
+    client = httpx.Client(transport=httpx.MockTransport(
+        lambda request:httpx.Response(429, headers={"Retry-After":"30"})))
+    c = LiveCollector(client, spacing=15, max_requests=6, retries=0,
+                      clock=lambda:START, monotonic=lambda:0,
+                      sleep=lambda _:None, jitter=lambda:0)
+    result = c.once(INVENTORY, SHAPES, AREA, stop_queries=1, itinerary_queries=1)
+    assert c.throttled and result["vehicles"] == []
+    assert result["diagnostics"]["requests"] == 1
+
+
+def test_geographic_sampling_never_uses_stop_outside_inventory():
+    inv = {**INVENTORY, "stops":[
+        {"stop_id":"100","status":"located","route_ids":["05000"]},
+        {"stop_id":"200","status":"located","route_ids":["05000"]},
+        {"stop_id":"300","status":"located","route_ids":["05000"]},
+        {"stop_id":"400","status":"unlocated","route_ids":["05000"]},
+    ]}
+    geo={"type":"FeatureCollection","features":[
+        {"type":"Feature","properties":{"stop_id":sid},
+         "geometry":{"type":"Point","coordinates":[lon,lat]}}
+        for sid,lon,lat in [
+            ("100",-51.3,-29.9),("200",-51.12,-29.9),
+            ("300",-51.2,-29.75),("400",-51.17,-29.90),
+        ]
+    ]}
+    samples = selected_stops(inv, {"05000"}, 0, 3, stop_geometries=geo)
+    assert set(samples)=={"100","200","300"}
+    assert "400" not in samples
+
+
+def test_stale_polls_reset_after_missing_collection_cycle():
+    c = collector()
+    c.once(INVENTORY, SHAPES, AREA, stop_queries=1, itinerary_queries=1)
+    empty = httpx.MockTransport(lambda request:httpx.Response(
+        200,text=jsonp("retornoJSON", {"sucesso":True,"previsoes":[]})
+    ))
+    c2 = collector(START + timedelta(seconds=60),transport=empty,state=c.state)
+    assert not c2.once(INVENTORY, SHAPES, AREA,stop_queries=1,itinerary_queries=1)["vehicles"]
+    c3 = collector(START + timedelta(seconds=120),state=c2.state)
+    recovered=c3.once(INVENTORY, SHAPES, AREA,stop_queries=1,itinerary_queries=1)
+    assert recovered["vehicles"][0]["stale_polls"]==0
