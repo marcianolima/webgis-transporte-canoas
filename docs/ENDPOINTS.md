@@ -55,9 +55,9 @@ A chave é somente do servidor (`ADMIN_API_KEY`, mínimo de 32 caracteres). A co
 
 Feed de entrada do worker: contrato **normalizado próprio**, não uma alegação de compatibilidade direta com SIU. Exige `{vehicles:[{source_id,vehicle_id,route_id,observed_at,longitude,latitude,scope:"municipal",municipality_code:"4304606",speed_kmh?,bearing?}]}`. Registros de outras redes são rejeitados. Adaptador do protocolo efetivo da TACOM depende da validação do APK e amostras.
 
-## Arquivos cartográficos da aplicação — 0.3.1
+## Arquivos cartográficos da aplicação — 0.4.0
 
-`data/transporte-canoas.pmtiles`: arquivo PMTiles v3/MVT estático publicado no Pages. Leitura GET/Range; alternativa GET completo limitada a 20 MB para servidor sem Range. `data/map-manifest.json`: tamanho, SHA-256, fontes, contagens e disponibilidade por linha. `data/route-shapes.geojson`: 57 itinerários de 36 linhas, como referência com proveniência; `data/stops.geojson` contém 385 paradas. Estes arquivos são produtos locais; não são endpoints descobertos do GoBus.
+`data/transporte-canoas.pmtiles`: arquivo PMTiles v3/MVT estático publicado no Pages. Leitura GET/Range; alternativa GET completo limitada a 20 MB para servidor sem Range. `data/map-manifest.json`: tamanho, SHA-256, fontes, contagens e disponibilidade por linha. `data/route-shapes.geojson`: 57 itinerários de 36 linhas, como referência com proveniência; `data/stops.geojson` contém 1.410 paradas. Estes arquivos são produtos locais; não são endpoints descobertos do GoBus.
 
 ## Recurso individual validado — 31/10/2026
 
@@ -78,3 +78,7 @@ Nova consulta de cidades confirmou HTTP 200 e Canoas/codcid 4. A coleta seguinte
 | `V3/buscarItinerario/{itinerário}/0/MPA/retornoJSONItinerario` | ID observado em previsão | `itinerarios[].coordX/coordY`, ordem de vértices | GeoJSON de referência; sem interpolar itinerários ausentes |
 
 A frequência de mudança do cadastro não foi acordada com o fornecedor. TTL do cache é política local, não frequência garantida da fonte. HTTP 200 com JSONP sem sucesso é rejeitado. Vínculos, vigência e sentidos exigem homologação operacional.
+
+## Inventário de paradas — 0.4.0
+
+`data/stop-inventory.json`: IDs das 72 listas municipais correspondentes, estado de localização e completude por linha. 1.410 de 1.433 IDs com posição publicada; 23 fora da área de referência, em revisão. Grade de consulta de 700 m e detalhes somente por IDs observados; nenhum ponto inferido. Contratos de leitura TACOM mantidos. [Método e resultados](COBERTURA-PARADAS.md).

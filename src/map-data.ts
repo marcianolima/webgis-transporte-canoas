@@ -24,6 +24,19 @@ export function densityColor(value: number) {
         ? "#a4d1b4"
         : "#d7ead6";
 }
+export type NeighborhoodMetrics = Record<string, {stops_per_km2: number | null; covered_area_pct: number | null}>;
+export function transportThemeColor(value: number | null | undefined, theme: string) {
+  if(value==null || !Number.isFinite(value) || value<0)return "#d6dcdf";
+  const limits=theme==="cobertura-paradas"?[25,50,75]:[5,10,20];
+  return value===0?"#fcf0dc":value>=limits[2]?"#176557":value>=limits[1]?"#4b9a86":value>=limits[0]?"#a4d1b4":"#e2ecd9";
+}
+export function areaColor(properties: Record<string, any>, theme: string, metrics?: NeighborhoodMetrics) {
+  if(theme==="densidade-paradas" || theme==="cobertura-paradas"){
+    const row=metrics?.[String(properties.BAIRRO)];
+    return transportThemeColor(theme==="densidade-paradas"?row?.stops_per_km2:row?.covered_area_pct,theme);
+  }
+  return densityColor(Number(properties.POPULACAO_2022??properties.pop??0)/Math.max(.001,Number(properties.AREA_KM2??properties.area_km2??1)));
+}
 export function geometryBounds(
   features: Feature[],
 ): [number, number, number, number] | null {
@@ -106,4 +119,10 @@ export function selectedStops(data: AppData, ids: string[]): FeatureCollection {
       (f) => !ids.length || stopRoutes(f).some((id) => ids.includes(id)),
     ),
   };
+}
+
+export function tileStopVisible(properties: Record<string, unknown>, routeIds: string[], allowedIds?: Set<string>) {
+  if (allowedIds && !allowedIds.has(String(properties.stop_id))) return false;
+  const routes=String(properties.route_ids_csv ?? "").split(",");
+  return !routeIds.length || routeIds.some(id=>routes.includes(id));
 }

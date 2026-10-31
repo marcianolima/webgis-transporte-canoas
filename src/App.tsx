@@ -42,6 +42,7 @@ import {
   number,
 } from "./data";
 import type { AppData, Departure, Vehicles } from "./types";
+import StopCoverage from "./components/StopCoverage";
 const TransportMap = lazy(() => import("./components/TransportMap"));
 const StopsPage = lazy(() => import("./components/StopsPage"));
 const Chart = lazy(() => import("./components/Chart"));
@@ -452,7 +453,7 @@ function App() {
           <a href={github} target="_blank" rel="noreferrer">
             Código e documentação <ArrowUpRight size={13} />
           </a>
-          <small>v0.3 · dados de referência</small>
+          <small>v0.4 · dados de referência</small>
         </div>
       </aside>
       <div className="workspace">
@@ -1331,6 +1332,7 @@ function App() {
                     />
                   </div>
                   <MapBox data={data} territorial compact selectedRouteIds={[...new Set(data.routeShapes?.features.map(f=>String(f.properties?.route_id)) ?? [])]} />
+                  <StopCoverage data={data}/>
                   <Panel
                     title="Leitura por bairro"
                     subtitle="Área calculada em SIRGAS 2000 / UTM 22S (EPSG:31982)"

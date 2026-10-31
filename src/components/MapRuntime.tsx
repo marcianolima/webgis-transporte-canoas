@@ -4,7 +4,7 @@ import type { Feature } from "geojson";
 import "leaflet/dist/leaflet.css";
 import { currentVehicles, number, brDate } from "../data";
 import {
-  densityColor,
+  areaColor,
   findArea,
   selectedShapes,
   routeColor,
@@ -115,15 +115,7 @@ export default function MapRuntime(props: RuntimeProps) {
           style: (f) => ({
             color: state.current.style.theme === "setores" ? "#fff" : "#3a6860",
             weight: 0.7,
-            fillColor: densityColor(
-              Number(f?.properties?.POPULACAO_2022 ?? f?.properties?.pop ?? 0) /
-                Math.max(
-                  0.001,
-                  Number(
-                    f?.properties?.AREA_KM2 ?? f?.properties?.area_km2 ?? 1,
-                  ),
-                ),
-            ),
+            fillColor: areaColor(f?.properties??{},state.current.style.theme,state.current.style.neighborhoodMetrics),
             fillOpacity: 0.6,
           }),
         }),
@@ -186,6 +178,8 @@ export default function MapRuntime(props: RuntimeProps) {
         number(p.POPULACAO_2022 ?? p.pop) +
         " habitantes · referência Censo 2022";
       node.append(title, text);
+      const metric=current.style.neighborhoodMetrics?.[String(p.BAIRRO)];
+      if(metric){const detail=document.createElement('p');detail.textContent=number(metric.stops_per_km2,1)+' paradas/km² · '+number(metric.covered_area_pct,1)+'% da área até 300 m de uma parada publicada. Referência estática; não comprova atendimento.';node.append(detail)}
       L.popup().setLatLng(event.latlng).setContent(node).openOn(m);
       if (p.BAIRRO) current.onArea(p.BAIRRO);
     });

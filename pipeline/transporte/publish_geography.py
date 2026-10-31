@@ -17,6 +17,7 @@ from .geo import MunicipalReferenceArea, prepare
 from .http import utcnow
 from .persistence import atomic_bytes, atomic_json
 from .tiles import build_pmtiles
+from .stop_inventory import refresh_inventory
 
 
 def merge_features(previous, incoming, key):
@@ -148,6 +149,22 @@ def _prepare(root, source, archive):
             "incremental_policy": "Ausência na amostra não remove geometrias anteriores; fetched_at preservado em cada feição.",
         }
     )
+    inventory_path = source / "stop-inventory.json"
+    if inventory_path.exists():
+        inventory = json.loads(inventory_path.read_text())
+        if inventory.get("generated_at") != summary.get("generated_at"):
+            raise ValueError("Inventário de paradas não corresponde à captura")
+        ids = [row["stop_id"] for row in inventory["stops"]]
+        if len(ids) != len(set(ids)) or any(
+            not set(row["route_ids"]).issubset(allowed) for row in inventory["stops"]
+        ):
+            raise ValueError("Inventário com IDs duplicados ou linha desconhecida")
+        inventory = refresh_inventory(inventory, stops["features"])
+        summary.update(
+            stop_localization_pct=inventory["localization_pct"],
+            unlocated_stop_ids=inventory["unlocated_stop_ids"],
+        )
+        dump(public / "stop-inventory.json", inventory)
     dump(public / "transport-geography.json", summary)
     prepare(root)
     build_pmtiles(root)

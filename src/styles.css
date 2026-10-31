@@ -2392,3 +2392,16 @@ tbody tr:hover {
     scroll-margin-top: 140px;
   }
 }
+
+.stop-coverage-metrics {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0;}
+.stop-coverage-metrics>div {padding:14px;border:1px solid var(--line);border-radius:10px;min-width:0;}
+.stop-coverage-metrics span {display:block;font-size:.8rem;color:var(--muted);margin-bottom:7px;}
+.stop-coverage-metrics strong {font-size:1.65rem;line-height:1.25;display:block;}
+.stop-coverage-metrics small {font-size:.85rem;font-weight:500;color:var(--muted);}
+.stop-coverage details {border-top:1px solid var(--line);padding-top:12px;margin-top:12px;}
+.stop-coverage summary {font-weight:650;cursor:pointer;}
+.stop-coverage .table-scroll {margin-top:14px;}
+.stop-coverage td:first-child {max-width:380px;white-space:normal;}
+.stop-coverage td button {text-align:left;white-space:normal;}
+.map-filter-note {padding:0 14px;margin:0 0 10px;}
+@media(max-width:600px) {.stop-coverage-metrics{grid-template-columns:1fr;gap:8px}.stop-coverage-metrics>div{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px}.stop-coverage-metrics span{margin:0;max-width:55%}.stop-coverage-metrics strong{font-size:1.3rem;text-align:right}.stop-coverage-metrics small{display:block}.stop-coverage .panel-title{align-items:flex-start;flex-direction:column}}

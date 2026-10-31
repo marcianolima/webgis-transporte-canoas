@@ -120,11 +120,12 @@ export async function loadData(): Promise<AppData> {
     "vehicles.json",
     "map-manifest.json",
     "route-shapes.geojson",
+    "stop-inventory.json",
   ];
   const values = await Promise.all(
     names.map(async (name) => {
       const optional =
-        name === "map-manifest.json" || name === "route-shapes.geojson";
+        name === "map-manifest.json" || name === "route-shapes.geojson" || name === "stop-inventory.json";
       try {
         const response = await fetch(base + "data/" + name);
         if (!response.ok) throw new Error("Não foi possível carregar " + name);
@@ -142,10 +143,23 @@ export async function loadData(): Promise<AppData> {
             !Array.isArray(document.features))
         )
           throw new Error("Geometria cartográfica incompatível");
+        if (name === "stop-inventory.json" &&
+            (document.schema_version !== 1 || !Array.isArray(document.routes) ||
+             !Array.isArray(document.stops) || !Number.isInteger(document.source_stop_ids) ||
+             document.municipality_code !== "4304606" || document.city_id !== "4" ||
+             !Number.isInteger(document.located_stop_ids) || document.located_stop_ids < 0 ||
+             !Number.isInteger(document.unlocated_stop_ids) || document.unlocated_stop_ids < 0 ||
+             document.source_stop_ids !== document.stops.length ||
+             document.located_stop_ids + document.unlocated_stop_ids !== document.source_stop_ids ||
+             !document.routes.every((r:any)=>typeof r.route_id === "string" && Number.isInteger(r.known_stop_ids) && Number.isInteger(r.located_stop_ids) && Number.isInteger(r.unlocated_stop_ids)) ||
+             !document.stops.every((s:any)=>typeof s.stop_id === "string" && Array.isArray(s.route_ids) && s.route_ids.every((id:unknown)=>typeof id === "string") && typeof s.status === "string") ||
+             !document.status_counts || typeof document.status_counts !== "object" ||
+             !Number.isInteger(document.source_lines_successful) || !Number.isInteger(document.catalogue_routes)))
+          throw new Error("Inventário de paradas incompatível");
         return document;
       } catch (error) {
         if (!optional) throw error;
-        return name === "map-manifest.json"
+        return name === "map-manifest.json" || name === "stop-inventory.json"
           ? undefined
           : { type: "FeatureCollection", features: [] };
       }
@@ -162,6 +176,7 @@ export async function loadData(): Promise<AppData> {
     vehicles,
     mapManifest,
     routeShapes,
+    stopInventory,
   ] = values;
   if (
     network.schema_version !== 1 ||
@@ -180,5 +195,6 @@ export async function loadData(): Promise<AppData> {
     vehicles,
     mapManifest,
     routeShapes,
+    stopInventory,
   };
 }

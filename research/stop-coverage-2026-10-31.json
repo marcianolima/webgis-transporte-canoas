@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "version": "0.4.0",
+  "baseline_commit": "85566d22f8056116c865275b2f1658b58833ff67",
+  "generated_at": "2026-10-31T14:27:39.265426+00:00",
+  "before_stops": 385,
+  "published_stops": 1410,
+  "added_stops": 1025,
+  "previous_stop_ids_preserved": 385,
+  "previous_stop_route_links_preserved": 1386,
+  "previous_itineraries_unchanged": 57,
+  "source_stop_ids": 1433,
+  "localization_pct": 98.39,
+  "status_counts": {
+    "located": 1410,
+    "outside_reference_area": 23
+  },
+  "municipal_line_lists": 72,
+  "ngs_catalogue_routes": 81,
+  "runs": [
+    {
+      "run_id": "20261031T140539-0c8dc1c3",
+      "started_at": "2026-10-31T14:05:39.254129+00:00",
+      "updated_at": "2026-10-31T14:20:36.986009+00:00",
+      "status": "completed",
+      "http_requests": 290,
+      "request_limit": 300,
+      "cache_hits": 74,
+      "retry_attempts": 0,
+      "successful_responses": 290,
+      "failed_resources": 0,
+      "timeout_seconds": 60.0,
+      "retries_per_resource": 2,
+      "stop_reason": null,
+      "last_resource": null
+    },
+    {
+      "run_id": "20261031T142237-a7f408dd",
+      "started_at": "2026-10-31T14:22:37.026519+00:00",
+      "updated_at": "2026-10-31T14:27:39.335140+00:00",
+      "status": "completed",
+      "http_requests": 96,
+      "request_limit": 300,
+      "cache_hits": 342,
+      "retry_attempts": 0,
+      "successful_responses": 96,
+      "failed_resources": 0,
+      "timeout_seconds": 60.0,
+      "retries_per_resource": 2,
+      "stop_reason": null,
+      "last_resource": null
+    }
+  ],
+  "grid_spacing_m": 700,
+  "spatial_query_points": 308,
+  "http_requests": 386,
+  "cache_hits": 416,
+  "neighborhood_counts": [
+    {
+      "name": "Brigadeira",
+      "before": 4,
+      "after": 29,
+      "covered_area_pct": 24.49
+    },
+    {
+      "name": "Centro",
+      "before": 23,
+      "after": 77,
+      "covered_area_pct": 100.0
+    },
+    {
+      "name": "Estância Velha",
+      "before": 73,
+      "after": 123,
+      "covered_area_pct": 93.512
+    },
+    {
+      "name": "Fátima",
+      "before": 37,
+      "after": 85,
+      "covered_area_pct": 71.677
+    },
+    {
+      "name": "Guajuviras",
+      "before": 36,
+      "after": 115,
+      "covered_area_pct": 50.384
+    },
+    {
+      "name": "Harmonia",
+      "before": 45,
+      "after": 133,
+      "covered_area_pct": 99.426
+    },
+    {
+      "name": "Igara",
+      "before": 20,
+      "after": 114,
+      "covered_area_pct": 96.421
+    },
+    {
+      "name": "Ilhas das Garças",
+      "before": 0,
+      "after": 0,
+      "covered_area_pct": 0.0
+    },
+    {
+      "name": "Industrial",
+      "before": 1,
+      "after": 23,
+      "covered_area_pct": 14.133
+    },
+    {
+      "name": "Marechal Rondon",
+      "before": 18,
+      "after": 60,
+      "covered_area_pct": 74.359
+    },
+    {
+      "name": "Mathias Velho",
+      "before": 15,
+      "after": 97,
+      "covered_area_pct": 85.216
+    },
+    {
+      "name": "Mato Grande",
+      "before": 19,
+      "after": 83,
+      "covered_area_pct": 35.676
+    },
+    {
+      "name": "Niterói",
+      "before": 14,
+      "after": 119,
+      "covered_area_pct": 72.623
+    },
+    {
+      "name": "Nossa Senhora das Graças",
+      "before": 17,
+      "after": 84,
+      "covered_area_pct": 37.944
+    },
+    {
+      "name": "Olaria",
+      "before": 41,
+      "after": 72,
+      "covered_area_pct": 93.477
+    },
+    {
+      "name": "Rio Branco",
+      "before": 15,
+      "after": 86,
+      "covered_area_pct": 88.7
+    },
+    {
+      "name": "São José",
+      "before": 6,
+      "after": 78,
+      "covered_area_pct": 75.281
+    },
+    {
+      "name": "São Luís",
+      "before": 1,
+      "after": 31,
+      "covered_area_pct": 17.907
+    }
+  ],
+  "territorial_quality": {
+    "stops_in_multiple_neighborhoods": 3,
+    "stops_outside_neighborhoods": 1,
+    "stops_neighborhood_assignment": "first_covering_polygon_in_source_order_epsg4326"
+  },
+  "archive": {
+    "bytes": 826541,
+    "sha256": "a2462afe18808972a98c88a00f1e33b18b075dc3e84f32bf866bf95c422418aa",
+    "tile_count": 28,
+    "layers": {
+      "bairros": 18,
+      "setores": 659,
+      "limite": 1,
+      "linhas": 57,
+      "paradas": 1410
+    }
+  },
+  "validation": {
+    "python_passed": 128,
+    "typescript_react_passed": 30,
+    "lint": "passed",
+    "build": "passed",
+    "public_data_validation": "passed",
+    "browser": {
+      "viewport_mobile": [
+        390,
+        844
+      ],
+      "horizontal_overflow_mobile": false,
+      "industrial_filtered_stops": 23,
+      "desktop_route_05140_filtered_stops": 78,
+      "pmtiles_loaded": true,
+      "completeness_pct_displayed": "98,4%"
+    }
+  },
+  "private_backup": {
+    "files": 1203,
+    "bytes": 1300226,
+    "sha256": "243f80c7ebab8d767bf818ccb672c09dd0413a54ba4825585cc3f659918a2b84"
+  }
+}

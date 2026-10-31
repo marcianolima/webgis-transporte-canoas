@@ -1,5 +1,8 @@
 # Mapa, PMTiles e importação de trajetos
 
+**Revisão atual 0.4.0:** 1.410 paradas de 1.433 IDs consultados; completude por linha e novos mapas territoriais. Ver [COBERTURA-PARADAS.md](COBERTURA-PARADAS.md). Os resultados das versões anteriores abaixo são históricos.
+
+
 **Revisão atual 0.3.1:** 57 itinerários de 36 linhas e 385 paradas; retomada sem perda dos registros anteriores. Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md). Os números da 0.3.0 abaixo são históricos.
 
 

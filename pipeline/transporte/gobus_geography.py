@@ -27,8 +27,9 @@ from .gobus_crosswalk import normalized
 from .http import utcnow
 
 from .gobus_reader import BASE, Reader
+from .stop_inventory import grid_queries, build_inventory
 
-METHOD = "gobus-geography-0.3.1"
+METHOD = "gobus-geography-0.4.0"
 
 
 def collect(
@@ -39,6 +40,8 @@ def collect(
     geo_samples=18,
     prediction_samples=10,
     max_itineraries=64,
+    grid_spacing=None,
+    detail_limit=12,
 ):
     root = Path(root)
     data = root / "public/data"
@@ -129,17 +132,45 @@ def collect(
     )
     coordinate_records = {}
     conflicts = set()
+    coordinate_status = {}
+    existing_path = data / "stops.geojson"
+    if existing_path.exists():
+        for feature in json.loads(existing_path.read_text())["features"]:
+            p = feature["properties"]
+            if p.get("source") != "TACOM-GoBus" or str(p["stop_id"]) not in links:
+                continue
+            lon, lat = feature["geometry"]["coordinates"]
+            if not area.point(lon, lat):
+                continue
+            coordinate_records[str(p["stop_id"])] = (
+                {
+                    "stop_id": str(p["stop_id"]),
+                    "label": p.get("name"),
+                    "siu": p.get("siu"),
+                    "longitude": lon,
+                    "latitude": lat,
+                },
+                {
+                    "url": p["source_url"],
+                    "sha256": p["source_sha256"],
+                    "fetched_at": p["fetched_at"],
+                },
+            )
 
     def add_points(result):
         if not result:
             return
         doc, evidence = result
         for stop in stops(json.dumps(doc)):
-            if "longitude" not in stop or not area.point(
-                stop["longitude"], stop["latitude"]
-            ):
-                continue
             sid = stop["stop_id"]
+            if sid not in links:
+                continue
+            if "longitude" not in stop:
+                coordinate_status[sid] = "no_coordinates"
+                continue
+            if not area.point(stop["longitude"], stop["latitude"]):
+                coordinate_status[sid] = "outside_reference_area"
+                continue
             if sid in coordinate_records:
                 old = coordinate_records[sid][0]
                 if (
@@ -151,6 +182,7 @@ def collect(
                     > 10
                 ):
                     conflicts.add(sid)
+                    coordinate_status[sid] = "coordinate_conflict"
             else:
                 coordinate_records[sid] = (stop, evidence)
 
@@ -181,31 +213,58 @@ def collect(
             break
         if not any(p.equals(point) for p in seeds):
             seeds.append(point)
+    if grid_spacing:
+        seeds = grid_queries(area, grid_spacing)[:geo_samples]
+    elif geo_samples <= 0:
+        seeds = []
     with ThreadPoolExecutor(max_workers=2) as pool:
-        for result in pool.map(
-            lambda p: read(
-                "paradas_proximas",
-                longitude=round(p.x, 6),
-                latitude=round(p.y, 6),
-                cidade="MPA",
+        for completed, result in enumerate(
+            pool.map(
+                lambda p: read(
+                    "paradas_proximas",
+                    longitude=round(p.x, 6),
+                    latitude=round(p.y, 6),
+                    cidade="MPA",
+                ),
+                seeds,
             ),
-            seeds,
+            1,
         ):
             add_points(result)
+            if completed % 25 == 0:
+                print(
+                    json.dumps(
+                        {
+                            "phase": "spatial_progress",
+                            "completed_queries": completed,
+                            "planned_queries": len(seeds),
+                            "linked_coordinates": len(coordinate_records),
+                            "requests": reader.count,
+                        }
+                    ),
+                    flush=True,
+                )
     unresolved = list(
         dict.fromkeys(sid for sid in origin_ids if sid not in coordinate_records)
-    )[:12]
+    )[:detail_limit]
     unresolved.extend(
         sid
         for sid in sorted(links, key=lambda sid: (-len(links[sid]), sid))
         if sid not in coordinate_records
         and sid not in unresolved
-        and len(unresolved) < 12
+        and len(unresolved) < detail_limit
     )
+    # O limite vale por execução; novas rodadas usam o cache e os pontos já publicados.
+    if hasattr(reader, "maximum"):
+        unresolved = unresolved[: max(0, reader.maximum - reader.count - 2)]
     with ThreadPoolExecutor(max_workers=2) as pool:
-        for result in pool.map(
-            lambda sid: read("parada_detalhes", parada=sid), unresolved
+        for sid, result in pool.map(
+            lambda sid: (sid, read("parada_detalhes", parada=sid)), unresolved
         ):
+            if result is None:
+                coordinate_status[sid] = "lookup_failed"
+            elif not result[0].get("paradas"):
+                coordinate_status[sid] = "no_coordinates"
             add_points(result)
     print(
         json.dumps(
@@ -239,6 +298,8 @@ def collect(
         for sid in eligible
         if sid not in sampled and len(sampled) < prediction_samples
     )
+    if prediction_samples <= 0:
+        sampled = []
     relationships = defaultdict(list)
     with ThreadPoolExecutor(max_workers=2) as pool:
         results = pool.map(
@@ -258,7 +319,7 @@ def collect(
                 if code in matches and iid.isdecimal() and iid != "0":
                     relationships[(code, iid)].append({"stop_id": sid, **evidence})
     # Incluir a amostra independente inicialmente validada, se ainda estiver na janela do cache.
-    if "8746" in links and "8746" not in sampled:
+    if prediction_samples > 0 and "8746" in links and "8746" not in sampled:
         result = read("previsoes", parada="8746", acessivel="false", cidade="MPA")
         if result:
             for prediction in predictions(json.dumps(result[0])):
@@ -424,6 +485,22 @@ def collect(
     }
     output = root / "var/gobus/geography"
     output.mkdir(parents=True, exist_ok=True)
+    inventory = build_inventory(
+        links,
+        source_stop_labels,
+        relation_evidence,
+        features,
+        coordinate_status,
+        summary["generated_at"],
+        len(network["routes"]),
+    )
+    summary.update(
+        stop_localization_pct=inventory["localization_pct"],
+        unlocated_stop_ids=inventory["unlocated_stop_ids"],
+        spatial_query_count=len(seeds),
+        grid_spacing_m=grid_spacing,
+        stop_detail_count=len(unresolved),
+    )
     for filename, document in [
         (
             "route-shapes.geojson",
@@ -444,6 +521,7 @@ def collect(
             },
         ),
         ("transport-geography.json", summary),
+        ("stop-inventory.json", inventory),
     ]:
         dump(output / filename, document)
     print(
@@ -473,6 +551,17 @@ def main():
     cli.add_argument("--service-date")
     cli.add_argument("--max-requests", type=int, default=180)
     cli.add_argument("--geo-samples", type=int, default=18)
+    cli.add_argument(
+        "--grid-spacing",
+        type=int,
+        help="Grade de consultas em metros (400–1000); não gera paradas",
+    )
+    cli.add_argument(
+        "--detail-limit",
+        type=int,
+        default=12,
+        help="Máximo de IDs conhecidos a localizar nesta execução (0–300)",
+    )
     cli.add_argument("--prediction-samples", type=int, default=10)
     cli.add_argument("--interval", type=float, default=2)
     cli.add_argument(
@@ -507,8 +596,10 @@ def main():
             args.root,
             reader=reader,
             service_date=args.service_date,
-            geo_samples=min(args.geo_samples, 40),
+            geo_samples=max(0, min(args.geo_samples, 320)),
             prediction_samples=min(args.prediction_samples, 20),
+            grid_spacing=args.grid_spacing,
+            detail_limit=max(0, min(args.detail_limit, 300)),
         )
         reader.finish("partial" if result["errors"] else "completed")
     except BaseException:

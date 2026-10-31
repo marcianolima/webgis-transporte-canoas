@@ -120,7 +120,22 @@ export interface MapManifest {
   route_catalogue_count: number;
   route_status: Record<string, { status: string; shape_count: number }>;
 }
+export interface StopInventory {
+  schema_version: 1;
+  generated_at: string;
+  source_stop_ids: number;
+  located_stop_ids: number;
+  unlocated_stop_ids: number;
+  localization_pct: number | null;
+  source_lines_successful: number;
+  catalogue_routes: number;
+  status_counts: Record<string, number>;
+  routes: {route_id:string;known_stop_ids:number;located_stop_ids:number;unlocated_stop_ids:number;localization_pct:number|null;source_url:string;source_sha256:string;fetched_at:string}[];
+  stops: {stop_id:string;name:string;route_ids:string[];status:string}[];
+  limitations: string[];
+}
 export interface AppData {
+  stopInventory?: StopInventory;
   routeShapes?: FeatureCollection;
   mapManifest?: MapManifest;
   network: Network;

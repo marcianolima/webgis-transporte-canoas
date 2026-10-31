@@ -100,3 +100,7 @@ Consultar [EVOLUCAO-0.3.md](EVOLUCAO-0.3.md). O workflow tem opção manual `ref
 ## Retomada de cartografia 0.3.1
 
 Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md) para os comandos, timeout de 60 s, retry limitado, journals, rollback e limites de persistência no Actions. Conservar `var/gobus/` em disco privado persistente com backup. Repetir o comando reaproveita capturas válidas; não apagar o cache para retomar. Uma coleta incompleta não deve ser publicada.
+
+## Expansão territorial das paradas 0.4.0
+
+[COBERTURA-PARADAS.md](COBERTURA-PARADAS.md) documenta as rodadas limitadas, reaproveitamento do cache e inventário de completude. Não usar `--service-date today` ao buscar o cadastro completo das linhas correspondentes: isso excluiria linhas sem programação para a data. `--prediction-samples 0` desliga previsões e aquisição de novas geometrias nesta coleta de coordenadas. Dados já publicados são preservados. O workflow manual continua limitado e sem coleta GPS contínua.

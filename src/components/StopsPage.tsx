@@ -4,6 +4,7 @@ import type { AppData } from "../types";
 import { brDate, csv, download, number } from "../data";
 import { stopRoutes } from "../map-data";
 import TransportMap from "./TransportMap";
+import StopCoverage from "./StopCoverage";
 export default function StopsPage({ data }: { data: AppData }) {
   const [query, setQuery] = useState(""),
     [line, setLine] = useState(""),
@@ -76,6 +77,7 @@ export default function StopsPage({ data }: { data: AppData }) {
             : "Cadastro geográfico municipal ainda indisponível. A ausência de pontos não significa ausência de atendimento."}
         </span>
       </div>
+      <StopCoverage data={data} onSelectLine={id=>change(setLine,id)}/>
       <section className="panel stops-filter-panel">
         <h2>Consultar paradas</h2>
         <div className="stops-filters">

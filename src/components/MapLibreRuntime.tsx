@@ -8,9 +8,10 @@ import {
   selectedShapes,
   routeColor,
   findArea,
+  areaColor,
 } from "../map-data";
 import { stopPopup } from "../map-popups";
-import { currentVehicles, brDate } from "../data";
+import { currentVehicles, brDate, number } from "../data";
 import type { RuntimeProps } from "./MapRuntime";
 export default function MapLibreRuntime(
   props: RuntimeProps & { onUnsupported: () => void },
@@ -28,18 +29,22 @@ export default function MapLibreRuntime(
         m.setLayoutProperty(
           name,
           "visibility",
-          p.style.theme === name ? "visible" : "none",
+          (p.style.theme === "setores" ? "setores" : "bairros") === name ? "visible" : "none",
         );
+    if(m.getLayer("bairros"))m.setPaintProperty("bairros","fill-color",[
+      "match",["get","BAIRRO"],
+      ...p.data.neighborhoods.features.flatMap(f=>[String(f.properties?.BAIRRO),areaColor(f.properties??{},p.style.theme,p.style.neighborhoodMetrics)]),
+      "#d6dcdf",
+    ] as any);
     if (m.getLayer("paradas")) {
       m.setLayoutProperty(
         "paradas",
         "visibility",
         p.style.showStops === false ? "none" : "visible",
       );
-      m.setFilter(
-        "paradas",
-        p.style.routeIds.length
-          ? ([
+      const filters: any[] = ["all"];
+      if(p.style.stopIds)filters.push(["in",["to-string",["get","stop_id"]],["literal",p.style.stopIds]]);
+      if(p.style.routeIds.length)filters.push([
               "any",
               ...p.style.routeIds.map((id) => [
                 "in",
@@ -51,9 +56,8 @@ export default function MapLibreRuntime(
                   ",",
                 ],
               ]),
-            ] as any)
-          : null,
-      );
+            ]);
+      m.setFilter("paradas",filters.length>1?filters as any:null);
     }
     if (m.getLayer("linhas"))
       m.setFilter("linhas", [
@@ -287,6 +291,8 @@ export default function MapLibreRuntime(
         div.textContent = String(
           f.properties?.BAIRRO || "Setor " + f.properties?.id,
         );
+        const metric=latest.current.style.neighborhoodMetrics?.[String(f.properties?.BAIRRO)];
+        if(metric)div.textContent+=' · '+number(metric.stops_per_km2,1)+' paradas/km² · '+number(metric.covered_area_pct,1)+'% da área até 300 m de uma parada publicada. Não comprova atendimento.';
         if (f.properties?.BAIRRO) latest.current.onArea(f.properties.BAIRRO);
       }
       new maplibregl.Popup()

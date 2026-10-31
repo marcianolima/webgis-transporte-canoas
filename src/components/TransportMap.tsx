@@ -76,6 +76,8 @@ export default function TransportMap({
     () => selectedShapes(data, ids),
     [data.routeShapes, key],
   );
+  const visibleStops = useMemo(()=>selectedStops(data,ids).features.length,[data.stops,key]);
+  const allowedStopIds = useMemo(()=>data.stops.features.map(f=>String(f.properties?.stop_id)),[data.stops]);
   const stateChanged = useCallback((value: MapState, text: string) => {
     setStatus(value);
     setMessage(text);
@@ -117,7 +119,8 @@ export default function TransportMap({
   );
   const runtimeProps = {
     data,
-    style: { theme, routeIds: ids, territorial, showStops },
+    style: { theme, routeIds: ids, territorial, showStops, stopIds:allowedStopIds,
+      neighborhoodMetrics:Object.fromEntries(data.territory.neighborhoods.map(n=>[n.name,{stops_per_km2:n.stops_per_km2,covered_area_pct:n.covered_area_pct}])) },
     neighborhood,
     focusedStopId,
     command,
@@ -139,6 +142,8 @@ export default function TransportMap({
           >
             <option value="bairros">Bairros oficiais</option>
             <option value="setores">Setores · Censo 2022</option>
+            <option value="densidade-paradas" disabled={!data.stops.features.length}>Paradas por km² · bairros</option>
+            <option value="cobertura-paradas" disabled={!data.stops.features.length}>Área até 300 m de paradas · bairros</option>
           </select>
         </label>
         <label>
@@ -177,10 +182,11 @@ export default function TransportMap({
             checked={showStops}
             onChange={(e) => setShowStops(e.target.checked)}
           />{" "}
-          Mostrar paradas de referência ({data.stops.features.length})
+          Mostrar paradas de referência ({visibleStops})
         </label>
         <span>{available} linhas com percurso · dados parciais da API</span>
       </div>
+      {ids.length>0&&<p className="caption map-filter-note">Filtro ativo: o mapa mostra paradas das linhas selecionadas. Para ver o cadastro completo publicado, limpe a seleção de linhas.</p>}
       <div
         className={
           "transport-map-layout " +
@@ -231,12 +237,14 @@ export default function TransportMap({
               Canoas, RS
             </strong>
             <span>
-              {theme === "setores" ? "Setores 2022" : "Bairros oficiais"} ·
-              habitantes/km²
+              {theme === "densidade-paradas" ? "Paradas/km² · referência" :
+                theme === "cobertura-paradas" ? "Área até 300 m (%) · referência" :
+                (theme === "setores" ? "Setores 2022" : "Bairros oficiais") + " · habitantes/km²"}
             </span>
             <span className="density-scale">
-              0 <i /> ≥ 20 mil
+              0 <i style={theme.includes("paradas")?{background:"linear-gradient(90deg,#fcf0dc,#e2ecd9,#a4d1b4,#4b9a86,#176557)"}:undefined}/> {theme==="densidade-paradas"?"≥ 20":theme==="cobertura-paradas"?"≥ 75%":"≥ 20 mil"}
             </span>
+            {theme.includes("paradas")&&<span>{theme==="densidade-paradas"?"Classes: 0 · 5 · 10 · 20":"Classes: 0 · 25 · 50 · 75%"}. Cinza: sem dados. Amostra; não comprova atendimento.</span>}
             <span>
               Contorno: união dos bairros; não é limite municipal homologado.
             </span>

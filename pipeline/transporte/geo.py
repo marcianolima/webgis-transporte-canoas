@@ -81,6 +81,17 @@ class MunicipalReferenceArea:
         )
 
 
+def assign_neighborhoods(polygons, points):
+    """Vínculo único pela geometria original; bordas/sobreposições têm desempate estável."""
+    assignments = []
+    ambiguous = 0
+    for point in points:
+        candidates = [i for i, polygon in enumerate(polygons) if polygon.covers(point)]
+        assignments.append(candidates[0] if candidates else None)
+        ambiguous += len(candidates) > 1
+    return assignments, ambiguous
+
+
 def prepare(root):
     public = Path(root) / "public/data"
     neighborhoods = json.loads((public / "bairros-oficiais.geojson").read_text())
@@ -118,11 +129,13 @@ def prepare(root):
             },
         )
     stops = json.loads(stops_path.read_text())
-    points = [
-        transform(PROJECT, shape(f["geometry"]))
+    geographic_points = [
+        shape(f["geometry"])
         for f in stops["features"]
         if shape(f["geometry"]).geom_type == "Point"
     ]
+    points = [transform(PROJECT, point) for point in geographic_points]
+    assignments, ambiguous_stops = assign_neighborhoods(polygons, geographic_points)
     buffer = unary_union([p.buffer(300) for p in points]) if points else None
     route_path = public / "route-shapes.geojson"
     route_features = (
@@ -135,11 +148,13 @@ def prepare(root):
     ]
     routes_union = unary_union([g for _, g in metric_routes]) if metric_routes else None
     analysis = []
-    for feature, polygon in zip(neighborhoods["features"], polygons):
+    for index, (feature, polygon) in enumerate(
+        zip(neighborhoods["features"], polygons)
+    ):
         p = feature["properties"]
         metric = transform(PROJECT, polygon)
         area = metric.area / 1e6
-        count = sum(metric.covers(point) for point in points) if points else None
+        count = assignments.count(index) if points else None
         analysis.append(
             {
                 "name": p["BAIRRO"],
@@ -207,11 +222,15 @@ def prepare(root):
                 else None
             ),
             "sectors": len(sectors["features"]),
+            "stops_neighborhood_assignment": "first_covering_polygon_in_source_order_epsg4326",
+            "stops_in_multiple_neighborhoods": ambiguous_stops,
+            "stops_outside_neighborhoods": assignments.count(None),
             "limitations": [
                 "O contorno da união de bairros não está homologado como limite municipal oficial.",
                 "Os setores censitários e seus atributos foram reutilizados da base local do WebGIS Empreender; referência IBGE 2022.",
                 "Cobertura euclidiana de área não é distância pela rede de pedestres nem percentual de população atendida.",
                 "Trajetos e paradas são uma amostra de referência TACOM; cobertura e densidade descrevem apenas os registros publicados, não toda a rede.",
+                "Cada parada tem um bairro principal por teste na geometria original EPSG:4326; bordas e sobreposições usam o primeiro polígono na ordem estável da fonte. Pontos fora dos bairros não recebem bairro por aproximação.",
                 "Extensão é a união de traçados da amostra, sem duplicar segmentos coincidentes; não equivale à oferta, frequência ou percurso autorizado.",
             ],
         },

@@ -150,7 +150,7 @@ class Reader:
                 request = urllib.request.Request(
                     url,
                     headers={
-                        "User-Agent": "GeoCanoasTransporte-AuthorizedResearch/0.3.1",
+                        "User-Agent": "GeoCanoasTransporte-AuthorizedResearch/0.4.0",
                         "Accept": "application/javascript,application/json,text/plain",
                     },
                 )

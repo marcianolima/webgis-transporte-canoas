@@ -1,5 +1,8 @@
 # Retomada segura da coleta — 0.3.1, 31/10/2026
 
+**Revisão atual 0.4.0:** 1.410 paradas de 1.433 IDs consultados; completude por linha e novos mapas territoriais. Ver [COBERTURA-PARADAS.md](COBERTURA-PARADAS.md). Os resultados das versões anteriores abaixo são históricos.
+
+
 ## Resultado observado
 
 Uma nova consulta GET ao catálogo de cidades respondeu **HTTP 200 em 4,92 s**, confirmando Canoas (`codcid=4`, praça `MPA`). O cancelamento de aprovação de rede da tentativa anterior não voltou a ocorrer nesta execução. Não há evidência que permita atribuir aquele cancelamento ao tempo de resposta da TACOM.

@@ -3,7 +3,7 @@ import { VectorTile } from "@mapbox/vector-tile";
 import Pbf from "pbf";
 import L from "leaflet";
 import { base } from "./data";
-import { densityColor, routeColor } from "./map-data";
+import { areaColor, routeColor, tileStopVisible, type NeighborhoodMetrics } from "./map-data";
 
 /** Leitura Range normal; servidores sem Range recebem uma única leitura completa, limitada. */
 export class ResilientSource extends FetchSource {
@@ -63,6 +63,8 @@ export interface TileStyle {
   routeIds: string[];
   territorial: boolean;
   showStops?: boolean;
+  neighborhoodMetrics?: NeighborhoodMetrics;
+  stopIds?: string[];
 }
 export class LocalVectorLayer extends L.GridLayer {
   private tileData = new Map<string, ReturnType<PMTiles["getZxy"]>>();
@@ -114,6 +116,7 @@ export class LocalVectorLayer extends L.GridLayer {
           -(coords.y - y * factor) * 256,
         );
         const style = this.style();
+        const allowedStops = style.stopIds ? new Set(style.stopIds) : undefined;
         let count = 0;
         for (const name of [
           style.theme === "setores" ? "setores" : "bairros",
@@ -132,15 +135,7 @@ export class LocalVectorLayer extends L.GridLayer {
               !style.routeIds.includes(String(p.route_id))
             )
               continue;
-            if (
-              name === "paradas" &&
-              style.routeIds.length &&
-              !style.routeIds.some((id) =>
-                ("," + String(p.route_ids_csv || "") + ",").includes(
-                  "," + id + ",",
-                ),
-              )
-            )
+            if (name === "paradas" && !tileStopVisible(p,style.routeIds,allowedStops))
               continue;
             const scale = (256 / f.extent) * factor;
             const geom = f.loadGeometry();
@@ -155,10 +150,7 @@ export class LocalVectorLayer extends L.GridLayer {
             ctx.setLineDash([]);
             ctx.globalAlpha = 1;
             if (f.type === 3) {
-              const density =
-                Number(p.POPULACAO_2022 ?? p.pop ?? 0) /
-                Math.max(0.001, Number(p.AREA_KM2 ?? p.area_km2 ?? 1));
-              ctx.fillStyle = densityColor(density);
+              ctx.fillStyle = areaColor(p,style.theme,style.neighborhoodMetrics);
               ctx.globalAlpha =
                 style.theme === "setores" || style.territorial ? 0.75 : 0.45;
               if (name !== "limite") ctx.fill("evenodd");

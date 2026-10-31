@@ -1,5 +1,12 @@
 # Relatório técnico — revisões de 30–31/10/2026
 
+## Revisão 0.4.0 — cobertura das paradas em 31/10/2026
+
+**1.410 paradas**, mais 1.025, dos 1.433 IDs das 72 listas consultadas (98,39%). Outros 23 IDs retornaram posições fora da área de referência e foram separados para revisão; nenhuma consulta ficou pendente nesse recorte. Preservados os 385 IDs, 1.386 vínculos e os 57 itinerários anteriores. Duas rodadas com 386 respostas válidas e 416 usos de cache, sem falhas/retries. Mapas de paradas/km² e área a 300 m, completude e exportações por linha. [Relatório e limites](COBERTURA-PARADAS.md).
+
+Validação local: **128 testes Python, 30 TypeScript/React**, lint, build e dados públicos aprovados. Evidência em `research/stop-coverage-2026-10-31.json`. A conclusão do deploy remoto desta revisão será registrada após conferir o run correspondente. O recorte não constitui inventário municipal homologado nem monitoramento GPS.
+
+
 ## Revisão 0.3.1 — retomada em 31/10/2026
 
 A retomada da API respondeu HTTP 200; coleta concluída com 77 requisições, 114 usos de cache e nenhuma falha. Publicação mesclada: **57 itinerários de 36 linhas e 385 paradas**, mantendo todos os IDs e vínculos anteriores. PMTiles com 541.915 bytes e 28 tiles. Oito percursos sob revisão de borda. [Resultado, proteção e limites](RETOMADA-COLETA.md).

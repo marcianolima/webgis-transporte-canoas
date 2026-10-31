@@ -23,6 +23,7 @@ describe("controles cartográficos", () => {
     await screen.findByTestId("selected-routes");
     fireEvent.click(screen.getByLabelText("Desenhar linha TEST"));
     expect(screen.getByTestId("selected-routes").textContent).toBe("SYNTHETIC");
+    expect(screen.getByText(/Filtro ativo: o mapa mostra paradas/)).toBeTruthy();
     expect(screen.getByRole("note").textContent).toContain(
       "nenhum trajeto aproximado",
     );
@@ -35,6 +36,7 @@ describe("controles cartográficos", () => {
     ).toBe(true);
     fireEvent.click(screen.getByText("Limpar seleção (1)"));
     expect(screen.getByTestId("selected-routes").textContent).toBe("");
+    expect(screen.queryByText(/Filtro ativo: o mapa mostra paradas/)).toBeNull();
   });
   it("habilita enquadramento somente quando existe geometria", async () => {
     const shapes = {
@@ -76,5 +78,23 @@ describe("controles cartográficos", () => {
     });
     expect(screen.queryByLabelText("Desenhar linha TEST")).toBeNull();
     expect(screen.getByTestId("selected-routes").textContent).toBe("SYNTHETIC");
+  });
+  it("oferece temas de transporte com unidade e aviso próprios",async()=>{
+    const data: AppData = {
+      ...fixture,
+      stops: {
+        type: "FeatureCollection",
+        features: [{
+          type: "Feature",
+          properties: {route_ids:["SYNTHETIC"]},
+          geometry: {type:"Point",coordinates:[-51.19,-29.91]},
+        }],
+      },
+    };
+    render(<TransportMap data={data}/>);
+    await screen.findByTestId("selected-routes");
+    fireEvent.change(screen.getByLabelText("Camada temática"),{target:{value:"cobertura-paradas"}});
+    expect(screen.getByText("Área até 300 m (%) · referência")).toBeTruthy();
+    expect(screen.getByText(/Classes: 0 · 25 · 50 · 75%/)).toBeTruthy();
   });
 });

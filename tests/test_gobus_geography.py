@@ -327,3 +327,34 @@ def test_incomplete_capture_never_replaces_publication(tmp_path, monkeypatch):
     with pytest.raises(ValueError, match="incompleta"):
         publication.publish(tmp_path)
     assert before == {p.name: p.read_bytes() for p in data.iterdir()}
+
+
+def test_coordinate_only_resume_reuses_published_stops_without_forecast_queries(
+    tmp_path,
+):
+    from transporte import publish_geography as publication
+
+    fixture(tmp_path)
+    collect(tmp_path, reader=FakeReader(), geo_samples=1, prediction_samples=1)
+    import shutil
+
+    shutil.copyfile(
+        tmp_path / "var/gobus/geography/stops.geojson",
+        tmp_path / "public/data/stops.geojson",
+    )
+    reader = FakeReader()
+    result = collect(
+        tmp_path, reader=reader, geo_samples=0, detail_limit=0, prediction_samples=0
+    )
+    assert result["published_stops"] == 1
+    assert result["published_itineraries"] == 0
+    assert not set(reader.calls) & {
+        "previsoes",
+        "paradas_proximas",
+        "parada_detalhes",
+        "itinerario",
+    }
+    inventory = json.loads(
+        (tmp_path / "var/gobus/geography/stop-inventory.json").read_text()
+    )
+    assert inventory["source_stop_ids"] == 2 and inventory["located_stop_ids"] == 1

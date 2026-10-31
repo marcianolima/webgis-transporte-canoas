@@ -23,6 +23,7 @@ describe("recuperação do carregamento cartográfico", () => {
     const value = await loadData();
     expect(value.mapManifest).toBeUndefined();
     expect(value.routeShapes?.features).toHaveLength(0);
+    expect(value.stopInventory).toBeUndefined();
     expect(value.neighborhoods).toEqual(empty);
   });
   it("JSON inválido em recurso opcional não derruba a aplicação", async () => {

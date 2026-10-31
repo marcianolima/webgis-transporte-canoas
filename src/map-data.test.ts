@@ -4,9 +4,26 @@ import {
   geometryBounds,
   selectedShapes,
   routeColor,
+  transportThemeColor,
+  areaColor,
+  tileStopVisible,
 } from "./map-data";
 import type { AppData } from "./types";
 import type { Feature } from "geojson";
+it("distingue zero, ausência e valores das análises territoriais de paradas",()=>{
+  expect(transportThemeColor(null,"densidade-paradas")).toBe("#d6dcdf");
+  expect(transportThemeColor(0,"densidade-paradas")).toBe("#fcf0dc");
+  expect(transportThemeColor(25,"densidade-paradas")).toBe("#176557");
+  expect(transportThemeColor(50,"cobertura-paradas")).toBe("#4b9a86");
+  expect(areaColor({BAIRRO:"SYNTHETIC"},"cobertura-paradas",{SYNTHETIC:{stops_per_km2:10,covered_area_pct:80}})).toBe("#176557");
+});
+it("respeita bairro/busca e linhas também nas paradas desenhadas pelos tiles",()=>{
+  const point={stop_id:"SYNTHETIC-A",route_ids_csv:"1,2"};
+  expect(tileStopVisible(point,[],new Set(["SYNTHETIC-B"])) ).toBe(false);
+  expect(tileStopVisible(point,[],new Set())).toBe(false);
+  expect(tileStopVisible(point,["2"],new Set(["SYNTHETIC-A"]))).toBe(true);
+  expect(tileStopVisible(point,["3"],new Set(["SYNTHETIC-A"]))).toBe(false);
+});
 // Geometria SYNTHETIC isolada de teste, nunca publicada na base real.
 const line: Feature = {
   type: "Feature",

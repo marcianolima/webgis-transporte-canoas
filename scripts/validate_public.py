@@ -49,7 +49,33 @@ def main():
         assert set(p['route_ids']).issubset(routes) and p['route_ids']
         assert area.point(*f['geometry']['coordinates']) and timestamp(p['fetched_at']) and len(p['source_sha256'])==64
     assert len(ids)==len(set(ids)) and manifest['layers']['paradas']==len(ids)
-    for name in ['route-shapes.geojson','stops.geojson','transport-geography.json']:
+    territory=json.loads((data/'territory.json').read_text())
+    if territory.get('stops_neighborhood_assignment')=='first_covering_polygon_in_source_order_epsg4326':
+        from collections import Counter
+        names=Counter(f['properties'].get('neighborhood') for f in stop_features)
+        assert all(row['stops']==names[row['name']] for row in territory['neighborhoods'])
+        assert sum(row['stops'] for row in territory['neighborhoods'])+territory['stops_outside_neighborhoods']==len(ids)
+    inventory_path=data/'stop-inventory.json'
+    if inventory_path.exists():
+        inv=json.loads(inventory_path.read_text())
+        known={r['stop_id'] for r in inv['stops']}
+        assert inv['schema_version']==1 and inv['municipality_code']=='4304606' and inv['city_id']=='4'
+        assert len(known)==len(inv['stops'])==inv['source_stop_ids']
+        located=known.intersection(ids)
+        assert len(located)==inv['located_stop_ids']
+        assert len(known)-len(located)==inv['unlocated_stop_ids']
+        assert sum(inv['status_counts'].values())==len(known)
+        assert inv['status_counts'].get('located',0)==len(located)
+        assert inv['localization_pct']==(round(len(located)/len(known)*100,2) if known else None)
+        for row in inv['stops']:
+            assert row['stop_id'].isdecimal() and set(row['route_ids']).issubset(routes)
+            assert (row['status']=='located')==(row['stop_id'] in located)
+        for row in inv['routes']:
+            source_ids={s['stop_id'] for s in inv['stops'] if row['route_id'] in s['route_ids']}
+            assert row['known_stop_ids']==len(source_ids) and row['located_stop_ids']==len(source_ids & located)
+            assert row['unlocated_stop_ids']==len(source_ids-located)
+            assert len(row['source_sha256'])==64 and timestamp(row['fetched_at'])
+    for name in ['route-shapes.geojson','stops.geojson','transport-geography.json']+(['stop-inventory.json'] if inventory_path.exists() else []):
         assert not any(key in (data/name).read_text() for key in ['numVeicGestor','vehicle_id','"body":'])
     assert not json.loads((data/'boundary.geojson').read_text())['features'][0]['properties']['is_official_municipal_boundary']
     print(json.dumps({'status':'passed','routes':len(routes),'departures':len(keys),'dates':len(n['source_dates']),'public_bytes':sum(p.stat().st_size for p in data.iterdir())}))
