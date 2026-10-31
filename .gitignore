@@ -7,3 +7,6 @@ var/
 .env
 *.tsbuildinfo
 .openai/
+
+# Certificados TLS e chaves privadas nunca em versionamento
+infra/certs/
