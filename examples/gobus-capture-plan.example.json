@@ -1,0 +1,16 @@
+{
+  "note": "EXEMPLO, não executar sem revisar IDs e autorização. Nenhum ID abaixo foi homologado.",
+  "authorized": false,
+  "allow_plain_http": false,
+  "city": "CAN",
+  "resources": [
+    {
+      "kind": "paradas_geograficas",
+      "linha": "17"
+    },
+    {
+      "kind": "itinerario",
+      "itinerario": "123"
+    }
+  ]
+}
