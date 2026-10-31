@@ -23,6 +23,7 @@ services:
       ADMIN_API_KEY: ${ADMIN_API_KEY:?Defina ADMIN_API_KEY com pelo menos 32 caracteres}
       PUBLIC_ORIGINS: ${PUBLIC_ORIGINS:-https://marcianolima.github.io}
       SOURCE_HOMOLOGATED: ${SOURCE_HOMOLOGATED:-false}
+      PUBLIC_POSITIONS_ENABLED: ${PUBLIC_POSITIONS_ENABLED:-false}
     depends_on:
       db:
         condition: service_healthy
@@ -51,5 +52,27 @@ services:
     read_only: true
     tmpfs: [/tmp]
     cap_drop: [ALL]
+  gobus-live:
+    profiles: [gobus-live]
+    build:
+      context: .
+      dockerfile: infra/Dockerfile
+    command: [python, -m, transporte.gobus_live_worker]
+    environment:
+      DATABASE_URL: postgresql://transporte:${POSTGRES_PASSWORD}@db:5432/transporte
+      GOBUS_READ_AUTHORIZED: ${GOBUS_READ_AUTHORIZED:-false}
+      GOBUS_ACCEPT_HTTP: ${GOBUS_ACCEPT_HTTP:-false}
+      GOBUS_REQUEST_SPACING: ${GOBUS_REQUEST_SPACING:-15}
+      GOBUS_CYCLE_SECONDS: ${GOBUS_CYCLE_SECONDS:-180}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - gobus_private:/app/var/gobus
+    restart: "no"
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
 volumes:
   postgres_data:
+  gobus_private:
