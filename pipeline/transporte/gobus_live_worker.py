@@ -75,9 +75,10 @@ def main():
     store.initialize()
     signal.signal(signal.SIGTERM,stop)
     signal.signal(signal.SIGINT,stop)
+    cache={}
     with httpx.Client(follow_redirects=False,trust_env=False) as client:
         while not STOP:
-            collector=LiveCollector(client,state=state,spacing=spacing,max_requests=16)
+            collector=LiveCollector(client,state=state,cache=cache,spacing=spacing,max_requests=16)
             run,report=ingest(store,collector,inventory,shapes,area)
             state=collector.state
             atomic_json(state_path,state)
