@@ -109,3 +109,7 @@ Ver [RETOMADA-COLETA.md](RETOMADA-COLETA.md) para os comandos, timeout de 60 s, 
 ## Integração de veículos TACOM/GoBus — disponível no código, opt-in
 
 O projeto inclui um serviço `gobus-live` no perfil separado de Docker Compose. Não é iniciado por padrão nem publica posições sem a variável `PUBLIC_POSITIONS_ENABLED=true` no backend. O feed de referência utiliza `time_basis=client_fetch`: a hora da consulta **não é** a hora de medição do equipamento GPS. Consulte [GOBUS-LIVE.md](GOBUS-LIVE.md) antes de ativar; mantenha `SOURCE_HOMOLOGATED=false` até validar timestamp de origem e contrato temporal.
+
+### Checklist de implantação real
+
+Antes de configurar DNS, certificados, proxy HTTPS ou publicar posições, consultar [ACEITE-OPERACIONAL-GPS.md](ACEITE-OPERACIONAL-GPS.md). A API fornece `/v1/health` com métricas sanitizadas da última rodada e `/v1/vehicles` somente após autorização independente. O script `scripts/check_gobus_deployment.py` realiza dois GET públicos e não imprime IDs nem coordenadas. CI, deploy do Pages e backend de produção são etapas diferentes.
