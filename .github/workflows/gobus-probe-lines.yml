@@ -1,0 +1,29 @@
+name: GoBus TACOM · diagnóstico de linhas
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe-lines.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Testar somente o catálogo geral de linhas da TACOM
+        env:
+          PYTHONPATH: pipeline:.
+        run: python scripts/gobus_probe_lines.py --autorizado --aceito-http
+      - name: Limites
+        if: always()
+        run: |
+          echo "## Diagnóstico independente, apenas catálogo geral" >> "$GITHUB_STEP_SUMMARY"
+          echo "Uma consulta GET, sem autenticação, GPS, veículos, alarmes ou ações operacionais." >> "$GITHUB_STEP_SUMMARY"
+          echo "O resultado não valida que as linhas são de Canoas." >> "$GITHUB_STEP_SUMMARY"
