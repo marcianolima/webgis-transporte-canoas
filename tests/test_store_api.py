@@ -121,3 +121,20 @@ def test_unverified_client_fetch_never_claimed_as_gps_homologated(store,sample,m
     result=TestClient(create_app(store)).get('/v1/vehicles').json()
     assert result['status']=='reference'
     assert result['vehicles'][0]['time_basis']=='client_fetch'
+
+
+def test_public_vehicle_rate_limit_is_configurable(store,monkeypatch):
+    monkeypatch.setenv('PUBLIC_API_LIMIT_PER_MINUTE','2')
+    app=create_app(store)
+    client=TestClient(app)
+    assert client.get('/v1/vehicles').status_code==200
+    assert client.get('/v1/vehicles').status_code==200
+    assert client.get('/v1/vehicles').status_code==429
+
+
+def test_untrusted_forwarded_client_ip_cannot_bypass_limit(store,monkeypatch):
+    monkeypatch.setenv('PUBLIC_API_LIMIT_PER_MINUTE','1')
+    monkeypatch.delenv('TRUSTED_PROXY_CIDRS',raising=False)
+    client=TestClient(create_app(store))
+    assert client.get('/v1/vehicles',headers={'X-Real-IP':'203.0.113.2'}).status_code==200
+    assert client.get('/v1/vehicles',headers={'X-Real-IP':'203.0.113.3'}).status_code==429
