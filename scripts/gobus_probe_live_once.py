@@ -16,12 +16,14 @@ def run(root):
     inventory=json.loads((data/"stop-inventory.json").read_text())
     shapes=json.loads((data/"route-shapes.geojson").read_text())
     neighborhoods=json.loads((data/"bairros-oficiais.geojson").read_text())
+    stops_geo=json.loads((data/"stops.geojson").read_text())
     # Validação do próprio catálogo publicado, sem utilizar coordenadas arbitrárias.
     if inventory.get("municipality_code")!="4304606" or inventory.get("city_id")!="4":
         raise ValueError("Inventário de Canoas inválido")
     with httpx.Client(follow_redirects=False,trust_env=True) as client:
         collector=LiveCollector(client,spacing=15,max_requests=10,retries=0)
-        result=collector.once(inventory,shapes,neighborhoods,stop_queries=6,itinerary_queries=3)
+        result=collector.once(inventory,shapes,neighborhoods,stop_queries=6,itinerary_queries=3,
+                              stop_geometries=stops_geo)
     return {
         "status": result["status"],
         "vehicles_observed": len(result["vehicles"]),
