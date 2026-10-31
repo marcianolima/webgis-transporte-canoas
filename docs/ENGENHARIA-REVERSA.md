@@ -11,7 +11,7 @@ Data da investigação: 30/10/2026, America/Sao_Paulo. Esta documentação disti
 
 ## APK: dependência real
 
-Nenhum APK obtido legitimamente do dispositivo do operador ou disponibilizado diretamente pelo desenvolvedor estava acessível neste ambiente. Uma página de distribuição de terceiros respondeu 403. Não foi realizada decompilação, captura de tráfego nem comparação de requests do aplicativo. Não há resultado JADX/APKTool a declarar.
+**Atualização 30/10/2026:** o arquivo APK 1.29.1.2 foi fornecido nesta conversa e analisado estaticamente como ZIP/Cordova. O relatório com hash, base de serviço, chamadas V3, esquemas, limites e evidências por arquivo está em [APK-GOBUS-1.29.1.2.md](APK-GOBUS-1.29.1.2.md). A observação histórica abaixo — ausência de APK na investigação anterior — não é mais vigente. Não houve execução do aplicativo, captura de tráfego, resposta municipal validada nem descompilação JADX.
 
 O utilitário `scripts/apk_audit.py` faz triagem **offline** do APK fornecido pelo operador: calcula SHA-256 e lista hosts e nomes de recursos sem expor parâmetros, credenciais ou copiar código proprietário. Exemplo:
 
@@ -23,7 +23,7 @@ jadx -d /diretorio/privado/jadx aplicativo.apk
 apktool d aplicativo.apk -o /diretorio/privado/apktool
 ```
 
-Os três últimos comandos pressupõem arquivo do próprio ambiente autorizado. JADX e APKTool são ferramentas externas, não instaladas ou executadas nesta sessão. Não comitar APK, dumps ou código decompilado. Localizar `pracaApp`, `json.js`, bases HTTP e bibliotecas Cordova/rede e confirmar no aparelho de teste. Arquitetura Cordova é referência da família SIU, **não fato confirmado deste APK**.
+Os três últimos comandos pressupõem arquivo do próprio ambiente autorizado. JADX e APKTool são ferramentas externas, não instaladas ou executadas nesta sessão. Não comitar APK, dumps ou código decompilado. Localizar `pracaApp`, `json.js`, bases HTTP e bibliotecas Cordova/rede e confirmar no aparelho de teste. A arquitetura Cordova **foi confirmada diretamente** neste APK em `assets/www`, assim como `pracaApp=GOBUS`, host `mpa.siumobile.com.br:6060` e caminhos das consultas. Os comentários antigos sobre arquitetura apenas hipotética foram superados.
 
 ## Referência SIU Mobile
 
@@ -57,12 +57,12 @@ O bundle contém referência a um provedor de mapa comercial. Nenhuma chave dess
 
 Não foi identificado SLA ou limite formal publicado para a API NGS. Coletor: no máximo duas conexões, intervalo global mínimo de 0,75 s, cache de respostas, timeout, até duas novas tentativas com backoff; 401/403/404 interrompem a tentativa daquele recurso. Atualização estática diária, sem polling de alta frequência na NGS. Dados consultáveis publicamente não constituem licença geral sobre sistemas proprietários; créditos e URLs de origem acompanham os dados.
 
-Frequência de origem GPS, autenticação GoBus, identificação de frota/viagem, precisão e condições de redistribuição do feed GPS continuam a confirmar. Um acordo técnico com o fornecedor ou um APK de teste é a dependência para avançar essa parte.
+O APK informa polling de posições a cada 6 s no cliente, mas frequência de origem GPS, autenticação efetiva do backend, identificação de frota/viagem, precisão e condições de redistribuição do feed GPS continuam a confirmar. Um acordo técnico com o fornecedor ou um APK de teste é a dependência para avançar essa parte.
 
 ## Revisão 0.2.0 — geometrias ainda indisponíveis
 
 O mapa local PMTiles resolve a publicação e o desenho de cartografia; não recupera trajetos ausentes. O endpoint de mapa observado no JavaScript NGS, `https://ngsservicos.com/sogal/scripts/getMapaJson.php?LINHA=05000&SENTIDO=01`, continuou retornando 404 no ambiente de investigação. A variante sob `aplicativos/NgPortais/sogal/scripts/` também retornou 404 e permanece hipótese rejeitada, não endpoint homologado. O diretório de serviços GeoCanoas retornou 503 neste ambiente. As buscas por feed municipal GTFS atual e consulta Overpass não forneceram geometria utilizável. Isso não demonstra ausência de dados na prefeitura ou indisponibilidade global das fontes.
 
-Resultado objetivo: **GoBus/TACOM não teve a API operacional homologada**. Horários, cadastro e logradouros vieram do portal **Sogal/NGS**. Não houve APK legítimo disponível, decompilação, captura de tráfego ou autenticação TACOM validada. A referência SIU de BHZ/GOBUS não foi promovida a contrato de Canoas. Próxima dependência: APK legítimo ou documentação/amostra autorizada; alternativamente, GTFS/GeoJSON municipal oficial para trajetos e paradas.
+**Atualização:** GoBus/TACOM **teve os caminhos e estruturas de API identificados pela análise estática do APK 1.29.1.2**, mas a API operacional ainda **não está homologada**. Horários, cadastro e logradouros publicados continuam provenientes de **Sogal/NGS**. Não houve captura de tráfego, dado GPS municipal recebido, teste de serviço autenticado nem autorização de coleta operacional validada. O APK foi fornecido após a investigação inicial. A referência SIU de BHZ/GOBUS não foi promovida a contrato de Canoas. Próxima dependência: resposta autorizada e municipal dos endpoints descobertos, correlação de códigos de itinerário e linha, timestamp de GPS e limite de frequência; alternativamente, GTFS/GeoJSON municipal oficial para trajetos e paradas.
 
 A versão 0.2.0 implementa importação de geometria, preservação de fonte/hash/data, filtros, desenho e testes isolados. A base publicada de linhas geográficas permanece vazia, explicitamente pendente. Consulte [MAPA-PMTILES.md](MAPA-PMTILES.md).
