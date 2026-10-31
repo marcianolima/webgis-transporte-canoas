@@ -1,0 +1,34 @@
+name: GoBus TACOM · sonda autorizada de catálogo
+on:
+  push:
+    paths:
+      - '.github/workflows/gobus-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gobus-once
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Consultar somente cidades e catálogo de linhas, uma vez cada
+        env:
+          PYTHONPATH: pipeline
+        run: |
+          python scripts/gobus_probe_catalogue.py --autorizado --aceito-http
+      - name: Registrar escopo e limitações
+        if: always()
+        run: |
+          echo "## Sonda estática autorizada do GoBus" >> "$GITHUB_STEP_SUMMARY"
+          echo "Somente 2 endpoints de metadados (cidadesApp, buscarLinhas), com uma requisição cada; nenhum veículo, placa, GPS, cartão ou alarme consultado." >> "$GITHUB_STEP_SUMMARY"
+          echo "O resultado não autoriza publicação de dados operacionais e não homologa códigos SIU↔NGS." >> "$GITHUB_STEP_SUMMARY"
