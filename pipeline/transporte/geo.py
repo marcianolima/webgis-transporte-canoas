@@ -57,7 +57,7 @@ def prepare(root):
     dump(public / 'censo2022-setores.geojson', slim)
     dump(public / 'territory.json', {'generated_at': utcnow(), 'neighborhoods': sorted(analysis, key=lambda x: x['name']),
         'stops_status': 'reference' if points else 'unavailable',
-        'stops_source': sorted({str(f.get('properties',{}).get('source','não informado')) for f in stops['features']}) if points else None,
+        'stops_source': ', '.join(sorted({str(f.get('properties',{}).get('source','não informado')) for f in stops['features']})) if points else None,
         'sectors': len(sectors['features']), 'limitations': [
         'O contorno da união de bairros não está homologado como limite municipal oficial.',
         'Os setores censitários e seus atributos foram reutilizados da base local do WebGIS Empreender; referência IBGE 2022.',
