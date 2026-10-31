@@ -96,6 +96,13 @@ export interface Vehicle {
   latitude: number;
   observed_at: string;
   fetched_at: string;
+  source_observed_at?: string | null;
+  time_basis?: "client_fetch" | "source_gps";
+  signal_status?: "ok" | "SC" | "SG";
+  stale_polls?: number;
+  source_itinerary_id?: string | null;
+  route_relation?: "reference_not_homologated" | "homologated" | "unknown";
+  bearing_basis?: string | null;
   speed_kmh?: number | null;
   bearing?: number | null;
   source_id: string;
