@@ -306,6 +306,16 @@ export default function MapLibreRuntime(
       if (!loaded && !disposed) latest.current.onUnsupported();
     });
     m.on("click", (event) => {
+      const vehicles = m.getLayer("vehicles")
+        ? m.queryRenderedFeatures(event.point, { layers: ["vehicles"] })
+        : [];
+      const div = document.createElement("div");
+      if (vehicles.length) {
+        const p = vehicles[0].properties;
+        const signal = p.signal_status === "SC" ? "sem comunicação" : p.signal_status === "SG" ? "sem GPS" : "sinal recebido";
+        const age = Math.max(0, Math.floor((Date.now() - Date.parse(p.fetched_at)) / 1000));
+        div.textContent = `Veículo ${p.id} · linha de referência ${p.line} · consulta ${brDate(p.fetched_at, true)} (há ${age} s) · ${signal}. ${p.time_basis === "client_fetch" ? "Sem timestamp original do GPS; sentido e itinerário não homologados." : ""}`;
+      } else {
       const foundStops = m.getLayer("paradas")
         ? m.queryRenderedFeatures(event.point, { layers: ["paradas"] })
         : [];
@@ -322,16 +332,7 @@ export default function MapLibreRuntime(
             .addTo(m);
         return;
       }
-      const vehicles = m.getLayer("vehicles")
-        ? m.queryRenderedFeatures(event.point, { layers: ["vehicles"] })
-        : [];
-      const div = document.createElement("div");
-      if (vehicles.length) {
-        const p = vehicles[0].properties;
-        const signal = p.signal_status === "SC" ? "sem comunicação" : p.signal_status === "SG" ? "sem GPS" : "sinal recebido";
-        const age = Math.max(0, Math.floor((Date.now() - Date.parse(p.fetched_at)) / 1000));
-        div.textContent = `Veículo ${p.id} · linha de referência ${p.line} · consulta ${brDate(p.fetched_at, true)} (há ${age} s) · ${signal}. ${p.time_basis === "client_fetch" ? "Sem timestamp original do GPS; sentido e itinerário não homologados." : ""}`;
-      } else {
+
         const f = findArea(latest.current.data, latest.current.style.theme, [
           event.lngLat.lng,
           event.lngLat.lat,
