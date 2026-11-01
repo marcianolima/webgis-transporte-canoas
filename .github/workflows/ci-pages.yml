@@ -82,6 +82,7 @@ jobs:
       - run: npm run build
         env:
           VITE_PUBLIC_API_BASE: ${{ vars.VITE_PUBLIC_API_BASE }}
+      - run: npm run test:pwa
       - uses: actions/upload-artifact@v4
         if: always()
         with:

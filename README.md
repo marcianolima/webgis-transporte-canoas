@@ -4,6 +4,8 @@ Plataforma de informação e análise do transporte coletivo municipal de Canoas
 
 **Versão 0.4.0 — 57 itinerários de 36 linhas e 1.410 paradas reais da API TACOM em PMTiles; GPS contínuo ainda não homologado.** Não é declarado atendimento integral da versão 1.0. Não há veículos ou viagens simulados.
 
+**PWA instalável (Android/iOS):** aplicativo com navegação inferior por polegar, instalação na tela inicial e referências consultadas disponíveis em modo offline parcial. Posições GPS/ETA nunca são armazenadas para uso offline. [Guia de instalação, atualização e limites](docs/PWA.md).
+
 [Aplicação pública](https://marcianolima.github.io/webgis-transporte-canoas/) · [Execuções e deploy](https://github.com/marcianolima/webgis-transporte-canoas/actions) · [Relatório técnico](docs/HOMOLOGACAO.md)
 
 [Integração experimental de veículos 0.5](docs/GOBUS-LIVE.md) · [Aceite operacional e passos de implantação](docs/ACEITE-OPERACIONAL-GPS.md) · [Ofício técnico à TACOM/Sogal](docs/OFICIO-TACOM-GPS.md) · [Homologação TACOM/GoBus](docs/GOBUS-HOMOLOGACAO.md) · [Cobertura e cartografia 0.4.0](docs/COBERTURA-PARADAS.md) · [Mapa e importação PMTiles](docs/MAPA-PMTILES.md) · [APK GoBus: relatório de engenharia reversa](docs/APK-GOBUS-1.29.1.2.md) · [Pendências para a versão 1.0](docs/VERSAO-1.0.md)
