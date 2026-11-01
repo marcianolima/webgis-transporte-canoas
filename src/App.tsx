@@ -1457,6 +1457,50 @@ function App() {
           )}
         </main>
       </div>
+      <nav className="mobile-dock" aria-label="Acesso rápido">
+        {pages.slice(0, 4).map(({ id, icon: Icon }) => (
+          <a key={id} href={"#" + id} aria-current={page === id ? "page" : undefined}
+            className={page === id ? "active" : ""}>
+            <Icon size={21} /><span>{id === "geral" ? "Início" : id === "mapa" ? "Mapa" : id === "linhas" ? "Linhas" : "Paradas"}</span>
+          </a>
+        ))}
+        <button type="button" ref={moreButton} onClick={() => setMoreOpen(true)}
+          aria-expanded={moreOpen} aria-controls="mobile-more-panel" aria-label="Mais páginas"
+          className={moreOpen || !pages.slice(0, 4).some(({ id }) => page === id) ? "active" : ""}>
+          <MoreHorizontal size={21} /><span>Mais</span>
+        </button>
+      </nav>
+      {moreOpen && (
+        <div className="mobile-menu-overlay">
+          <button type="button" className="mobile-menu-backdrop" aria-label="Fechar menu"
+            onClick={() => { setMoreOpen(false); moreButton.current?.focus(); }} />
+          <section className="mobile-menu-sheet" id="mobile-more-panel" role="dialog"
+            aria-modal="true" aria-label="Navegação completa">
+            <div className="mobile-menu-heading">
+              <div><strong>Explorar Transporte Canoas</strong><small>Escolha uma área do observatório</small></div>
+              <button type="button" ref={closeMenuButton} aria-label="Fechar navegação"
+                onClick={() => { setMoreOpen(false); moreButton.current?.focus(); }}><X size={22}/></button>
+            </div>
+            {nav(true)}
+            <div className="mobile-menu-foot">Dados de referência · Verifique sempre a data de atualização.</div>
+          </section>
+        </div>
+      )}
+      {pwa.guideOpen && (
+        <div className="pwa-dialog-backdrop" role="presentation" onClick={() => pwa.setGuideOpen(false)}>
+          <section className="pwa-dialog" role="dialog" aria-modal="true" aria-label="Instalar WebGIS"
+            onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-menu-heading">
+              <strong>Instalar Transporte Canoas</strong>
+              <button type="button" aria-label="Fechar instruções" onClick={() => pwa.setGuideOpen(false)}><X size={20} /></button>
+            </div>
+            <p><strong>Android (Chrome ou Edge):</strong> use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.</p>
+            <p><strong>iPhone (Safari):</strong> toque em Compartilhar e em “Adicionar à Tela de Início”.</p>
+            <p className="caption">A instalação depende do navegador. Sem rede, somente referências já armazenadas ficam disponíveis; GPS atual nunca é salvo.</p>
+            <button type="button" className="primary" onClick={() => pwa.setGuideOpen(false)}>Entendi</button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }
