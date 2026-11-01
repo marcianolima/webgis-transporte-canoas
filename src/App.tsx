@@ -17,6 +17,8 @@ import {
   Map,
   MapPin,
   Moon,
+  MoreHorizontal,
+  X,
   Navigation,
   Radio,
   RefreshCw,
@@ -43,6 +45,7 @@ import {
 } from "./data";
 import type { AppData, Departure } from "./types";
 import { useVehicles } from "./hooks/useVehicles";
+import { usePwa } from "./hooks/usePwa";
 import StopCoverage from "./components/StopCoverage";
 const TransportMap = lazy(() => import("./components/TransportMap"));
 const StopsPage = lazy(() => import("./components/StopsPage"));
@@ -205,9 +208,31 @@ function App() {
     [routeId, setRouteId] = useState(""),
     [query, setQuery] = useState(""),
     [revision, setRevision] = useState(0),
-    [clock, setClock] = useState(Date.now());
+    [clock, setClock] = useState(Date.now()),
+    [moreOpen, setMoreOpen] = useState(false);
   const mobileNav = useRef<HTMLElement>(null),
+    moreButton = useRef<HTMLButtonElement>(null),
+    closeMenuButton = useRef<HTMLButtonElement>(null),
     main = useRef<HTMLElement>(null);
+  const pwa = usePwa();
+  useEffect(() => {
+    if (!moreOpen) return;
+    const old = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeMenuButton.current?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", escape);
+    return () => { document.body.style.overflow = old; window.removeEventListener("keydown", escape); };
+  }, [moreOpen]);
+  useEffect(() => {
+    if (!pwa.online) {
+      setData((current) => current ? { ...current, vehicles: {
+        status: "unavailable", generated_at: null, vehicles: [],
+        message: "Sem conexão. Nenhuma posição atual pode ser inferida." } } : current);
+    }
+  }, [pwa.online]);
   useEffect(() => {
     const sync = () => {
       setPage(
@@ -216,6 +241,7 @@ function App() {
           : "geral",
       );
       setQuery("");
+      setMoreOpen(false);
     };
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
@@ -278,7 +304,7 @@ function App() {
       setRouteId(routes[0].id);
   }, [routes, routeId]);
   const selected = data?.network.routes.find((r) => r.id === routeId);
-  const live = data ? currentVehicles(data.vehicles.vehicles, clock) : [];
+  const live = data && pwa.online ? currentVehicles(data.vehicles.vehicles, clock) : [];
   const chartByHour = useMemo(
     () =>
       Array.from(
@@ -312,6 +338,7 @@ function App() {
             href={"#" + id}
             aria-current={page === id ? "page" : undefined}
             className={page === id ? "active" : ""}
+            onClick={mobile ? () => setMoreOpen(false) : undefined}
           >
             <Icon size={18} />
             <span>{label}</span>
@@ -369,6 +396,12 @@ function App() {
               <span className="location-dot" />
               Municipal · Canoas
             </span>
+            {!pwa.installed && (
+              <button className="pwa-install-button" onClick={() => void pwa.install()}
+                aria-label="Instalar aplicativo" title="Instalar Transporte Canoas">
+                <ArrowDownToLine size={17} /> <span>Instalar</span>
+              </button>
+            )}
             <button
               className="icon-button"
               onClick={() => setDark(!dark)}
@@ -388,7 +421,19 @@ function App() {
             </a>
           </div>
         </header>
-        {nav(true)}
+        {!pwa.online && (
+          <div className="pwa-notice pwa-offline" role="status">
+            <WifiOff size={17} />
+            <span><strong>Sem conexão.</strong> Horários e mapas acessados podem vir de cópias anteriores. GPS e previsões atuais estão indisponíveis.</span>
+          </div>
+        )}
+        {pwa.updateReady && (
+          <div className="pwa-notice pwa-update" role="status">
+            <RefreshCw size={17} />
+            <span>Nova versão do WebGIS disponível.</span>
+            <button onClick={() => void pwa.update()}>Atualizar aplicativo</button>
+          </div>
+        )}
         <main ref={main} tabIndex={-1} id="conteudo">
           <div className="page-heading">
             <div>
