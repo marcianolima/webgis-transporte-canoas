@@ -2,7 +2,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { deflateSync } from "node:zlib";
 import { fileURLToPath } from "node:url";
-import { dirname, join } from "node:path";
+import { join } from "node:path";
 const target = fileURLToPath(new URL("../public/icons/", import.meta.url));
 mkdirSync(target, { recursive: true });
 function crc32(bytes) {
