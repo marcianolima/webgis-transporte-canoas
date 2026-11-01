@@ -2434,3 +2434,62 @@ tbody tr:hover {
 @media (prefers-reduced-motion: reduce) {
   .vehicle-marker-core { transition: none; }
 }
+
+
+/* PWA instalável: status, navegação por polegar e safe areas dos dispositivos. */
+.pwa-install-button { display: inline-flex; align-items: center; gap: 6px; padding: 8px 11px; font-size: 11px; color: var(--accent); font-weight: 700; border-color: var(--line); }
+.pwa-notice { display:flex; align-items:center; gap: 10px; padding: 10px 24px; background: var(--warn-bg); color: var(--text); border-bottom: 1px solid var(--line); font-size: 12px; }
+.pwa-notice svg { flex-shrink: 0; }
+.pwa-notice span { flex:1; min-width:0; line-height:1.5; }
+.pwa-update { background: var(--soft); }
+.pwa-update button { min-height: 40px; padding: 7px 12px; font-size: 12px; font-weight:700; }
+.mobile-dock, .mobile-menu-overlay { display: none; }
+.pwa-dialog-backdrop { position: fixed; inset:0; z-index: 1200; display:grid; place-items:center; padding:20px; background:#102c2dc4; }
+.pwa-dialog { background:var(--surface); color:var(--text); padding:20px; width:min(100%,430px); max-height:90dvh; overflow-y:auto; border-radius:16px; box-shadow:0 15px 40px #0003; }
+.pwa-dialog p { font-size:13px; line-height:1.7; }
+.pwa-dialog .primary { width:100%; }
+.mobile-menu-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.mobile-menu-heading strong { display:block; font-size:16px; }
+.mobile-menu-heading small { display:block; font-size:12px; color:var(--muted); }
+.mobile-menu-heading button { min-height:44px; min-width:44px; }
+@media (max-width:760px) {
+  .topbar { padding-left: max(14px, env(safe-area-inset-left)); padding-right:max(14px, env(safe-area-inset-right)); }
+  .breadcrumb { gap: 5px; font-size: 11px; min-width:0; }
+  .breadcrumb strong { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .top-actions { gap: 5px; flex-shrink:0; }
+  .pwa-install-button { min-height:40px; padding:7px 9px; }
+  .pwa-install-button span { display:none; }
+  .pwa-install-button svg { width:19px; height:19px; }
+  .mobile-dock { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); position:fixed; inset:auto 0 0; z-index:700; background:var(--surface); box-shadow:0 -3px 16px #102b2b16; border-top:1px solid var(--line); min-height:64px; padding:5px max(4px, env(safe-area-inset-right)) calc(5px + env(safe-area-inset-bottom)) max(4px, env(safe-area-inset-left)); }
+  .mobile-dock a, .mobile-dock button { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:4px; min-width:0; border:0; background:transparent; border-radius:10px; padding:6px 2px; min-height:52px; color:var(--muted); font-size:10px; font-weight:650; }
+  .mobile-dock a.active, .mobile-dock button.active { color:var(--accent); background:var(--soft); }
+  .mobile-dock span { white-space:nowrap; }
+  .mobile-menu-overlay { display:block; position:fixed; inset:0; z-index:699; }
+  .mobile-menu-backdrop { position:absolute; inset:0; background:#102c2dc2; width:100%; border:0; border-radius:0; }
+  .mobile-menu-sheet { position:absolute; bottom:calc(64px + env(safe-area-inset-bottom)); left:0; right:0; padding:17px 15px 20px; max-height:min(78dvh,700px); overflow-y:auto; border-radius:18px 18px 0 0; background:var(--surface); color:var(--text); box-shadow:0 -8px 30px #071b1b35; }
+  .mobile-menu-sheet .mobile-nav { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px; position:static; overflow:visible; padding:14px 0; border:0; background:transparent; }
+  .mobile-menu-sheet .mobile-nav::after { display:none; }
+  .mobile-menu-sheet .mobile-nav > div { min-width:0; }
+  .mobile-menu-sheet .mobile-nav a { display:flex; min-height:52px; border:1px solid var(--line); border-radius:9px; padding:10px; gap:7px; font-size:11px; align-items:center; white-space:normal; }
+  .mobile-menu-sheet .mobile-nav a.active { border-color:var(--accent); box-shadow:none; }
+  .mobile-menu-sheet .mobile-nav a svg { width:17px; height:17px; }
+  .mobile-menu-foot { border-top:1px solid var(--line); padding-top:12px; font-size:11px; color:var(--muted); }
+  .pwa-notice { padding:10px 15px; font-size:11px; align-items:flex-start; }
+  .pwa-update { flex-wrap:wrap; }
+  .pwa-update button { margin-left:26px; }
+  main { padding-bottom:calc(92px + env(safe-area-inset-bottom)); }
+  .map-pmtiles, .compact-map .map-pmtiles { height:min(60dvh,530px); min-height:340px; }
+  .map-route-list { max-height:210px; }
+  .metric { border-radius:12px; }
+  .metric strong { line-height:1.15; }
+  .report-filters input, .report-filters select, .stops-filters input, .stops-filters select { font-size:16px; }
+  .map-access-controls select { font-size:14px; }
+}
+@media (max-width:380px) {
+  .topbar { padding-left:9px; padding-right:9px; }
+  .breadcrumb span, .breadcrumb > svg { display:none; }
+  .mobile-menu-sheet .mobile-nav { grid-template-columns:1fr; }
+}
+@media print {
+  .mobile-dock, .mobile-menu-overlay, .pwa-install-button, .pwa-notice, .pwa-dialog-backdrop { display:none !important; }
+}
