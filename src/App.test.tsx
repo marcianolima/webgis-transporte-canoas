@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, describe, it, expect, vi } from "vitest";
-import { cleanup, render, screen, fireEvent } from "@testing-library/react";
+import { cleanup, render, screen, fireEvent, within } from "@testing-library/react";
 import App from "./App";
 import * as source from "./data";
 import type { AppData } from "./types";
@@ -117,6 +117,27 @@ describe("fluxos da interface", () => {
         .getAllByRole("link", { name: "Relatórios" })
         .every((a) => a.getAttribute("aria-current") === "page"),
     ).toBe(true);
+  });
+  it("oferece navegação por polegar e menu completo", async () => {
+    vi.spyOn(source, "loadData").mockResolvedValue(fixture);
+    render(<App />);
+    await screen.findByText("Saídas programadas");
+    const dock = screen.getByRole("navigation", { name: "Acesso rápido" });
+    expect(within(dock).getByRole("link", { name: "Mapa" })).toBeTruthy();
+    fireEvent.click(within(dock).getByRole("button", { name: "Mais páginas" }));
+    const drawer = screen.getByRole("dialog", { name: "Navegação completa" });
+    expect(within(drawer).getByRole("link", { name: "Auditoria operacional" })).toBeTruthy();
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog", { name: "Navegação completa" })).toBeNull();
+  });
+  it("explica a instalação quando não há convite do navegador", async () => {
+    vi.spyOn(source, "loadData").mockResolvedValue(fixture);
+    render(<App />);
+    await screen.findByText("Saídas programadas");
+    fireEvent.click(screen.getByRole("button", { name: "Instalar aplicativo" }));
+    expect(screen.getByRole("dialog", { name: "Instalar WebGIS" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: "Entendi" }));
+    expect(screen.queryByRole("dialog", { name: "Instalar WebGIS" })).toBeNull();
   });
   it("apresenta falha de carregamento e permite tentar novamente", async () => {
     vi.spyOn(source, "loadData").mockRejectedValue(
