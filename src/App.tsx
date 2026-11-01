@@ -17,6 +17,8 @@ import {
   Map,
   MapPin,
   Moon,
+  MoreHorizontal,
+  X,
   Navigation,
   Radio,
   RefreshCw,
@@ -43,6 +45,7 @@ import {
 } from "./data";
 import type { AppData, Departure } from "./types";
 import { useVehicles } from "./hooks/useVehicles";
+import { usePwa } from "./hooks/usePwa";
 import StopCoverage from "./components/StopCoverage";
 const TransportMap = lazy(() => import("./components/TransportMap"));
 const StopsPage = lazy(() => import("./components/StopsPage"));
@@ -205,9 +208,31 @@ function App() {
     [routeId, setRouteId] = useState(""),
     [query, setQuery] = useState(""),
     [revision, setRevision] = useState(0),
-    [clock, setClock] = useState(Date.now());
+    [clock, setClock] = useState(Date.now()),
+    [moreOpen, setMoreOpen] = useState(false);
   const mobileNav = useRef<HTMLElement>(null),
+    moreButton = useRef<HTMLButtonElement>(null),
+    closeMenuButton = useRef<HTMLButtonElement>(null),
     main = useRef<HTMLElement>(null);
+  const pwa = usePwa();
+  useEffect(() => {
+    if (!moreOpen) return;
+    const old = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeMenuButton.current?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMoreOpen(false);
+    };
+    window.addEventListener("keydown", escape);
+    return () => { document.body.style.overflow = old; window.removeEventListener("keydown", escape); };
+  }, [moreOpen]);
+  useEffect(() => {
+    if (!pwa.online) {
+      setData((current) => current ? { ...current, vehicles: {
+        status: "unavailable", generated_at: null, vehicles: [],
+        message: "Sem conexão. Nenhuma posição atual pode ser inferida." } } : current);
+    }
+  }, [pwa.online]);
   useEffect(() => {
     const sync = () => {
       setPage(
@@ -216,6 +241,7 @@ function App() {
           : "geral",
       );
       setQuery("");
+      setMoreOpen(false);
     };
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
@@ -278,7 +304,7 @@ function App() {
       setRouteId(routes[0].id);
   }, [routes, routeId]);
   const selected = data?.network.routes.find((r) => r.id === routeId);
-  const live = data ? currentVehicles(data.vehicles.vehicles, clock) : [];
+  const live = data && pwa.online ? currentVehicles(data.vehicles.vehicles, clock) : [];
   const chartByHour = useMemo(
     () =>
       Array.from(
@@ -312,6 +338,7 @@ function App() {
             href={"#" + id}
             aria-current={page === id ? "page" : undefined}
             className={page === id ? "active" : ""}
+            onClick={mobile ? () => setMoreOpen(false) : undefined}
           >
             <Icon size={18} />
             <span>{label}</span>
@@ -369,6 +396,12 @@ function App() {
               <span className="location-dot" />
               Municipal · Canoas
             </span>
+            {!pwa.installed && (
+              <button className="pwa-install-button" onClick={() => void pwa.install()}
+                aria-label="Instalar aplicativo" title="Instalar Transporte Canoas">
+                <ArrowDownToLine size={17} /> <span>Instalar</span>
+              </button>
+            )}
             <button
               className="icon-button"
               onClick={() => setDark(!dark)}
@@ -388,7 +421,19 @@ function App() {
             </a>
           </div>
         </header>
-        {nav(true)}
+        {!pwa.online && (
+          <div className="pwa-notice pwa-offline" role="status">
+            <WifiOff size={17} />
+            <span><strong>Sem conexão.</strong> Horários e mapas acessados podem vir de cópias anteriores. GPS e previsões atuais estão indisponíveis.</span>
+          </div>
+        )}
+        {pwa.updateReady && (
+          <div className="pwa-notice pwa-update" role="status">
+            <RefreshCw size={17} />
+            <span>Nova versão do WebGIS disponível.</span>
+            <button onClick={() => void pwa.update()}>Atualizar aplicativo</button>
+          </div>
+        )}
         <main ref={main} tabIndex={-1} id="conteudo">
           <div className="page-heading">
             <div>
@@ -1412,6 +1457,50 @@ function App() {
           )}
         </main>
       </div>
+      <nav className="mobile-dock" aria-label="Acesso rápido">
+        {pages.slice(0, 4).map(({ id, icon: Icon }) => (
+          <a key={id} href={"#" + id} aria-current={page === id ? "page" : undefined}
+            className={page === id ? "active" : ""}>
+            <Icon size={21} /><span>{id === "geral" ? "Início" : id === "mapa" ? "Mapa" : id === "linhas" ? "Linhas" : "Paradas"}</span>
+          </a>
+        ))}
+        <button type="button" ref={moreButton} onClick={() => setMoreOpen(true)}
+          aria-expanded={moreOpen} aria-controls="mobile-more-panel" aria-label="Mais páginas"
+          className={moreOpen || !pages.slice(0, 4).some(({ id }) => page === id) ? "active" : ""}>
+          <MoreHorizontal size={21} /><span>Mais</span>
+        </button>
+      </nav>
+      {moreOpen && (
+        <div className="mobile-menu-overlay">
+          <button type="button" className="mobile-menu-backdrop" aria-label="Fechar menu"
+            onClick={() => { setMoreOpen(false); moreButton.current?.focus(); }} />
+          <section className="mobile-menu-sheet" id="mobile-more-panel" role="dialog"
+            aria-modal="true" aria-label="Navegação completa">
+            <div className="mobile-menu-heading">
+              <div><strong>Explorar Transporte Canoas</strong><small>Escolha uma área do observatório</small></div>
+              <button type="button" ref={closeMenuButton} aria-label="Fechar navegação"
+                onClick={() => { setMoreOpen(false); moreButton.current?.focus(); }}><X size={22}/></button>
+            </div>
+            {nav(true)}
+            <div className="mobile-menu-foot">Dados de referência · Verifique sempre a data de atualização.</div>
+          </section>
+        </div>
+      )}
+      {pwa.guideOpen && (
+        <div className="pwa-dialog-backdrop" role="presentation" onClick={() => pwa.setGuideOpen(false)}>
+          <section className="pwa-dialog" role="dialog" aria-modal="true" aria-label="Instalar WebGIS"
+            onClick={(event) => event.stopPropagation()}>
+            <div className="mobile-menu-heading">
+              <strong>Instalar Transporte Canoas</strong>
+              <button type="button" aria-label="Fechar instruções" onClick={() => pwa.setGuideOpen(false)}><X size={20} /></button>
+            </div>
+            <p><strong>Android (Chrome ou Edge):</strong> use o menu do navegador e escolha “Instalar app” ou “Adicionar à tela inicial”.</p>
+            <p><strong>iPhone (Safari):</strong> toque em Compartilhar e em “Adicionar à Tela de Início”.</p>
+            <p className="caption">A instalação depende do navegador. Sem rede, somente referências já armazenadas ficam disponíveis; GPS atual nunca é salvo.</p>
+            <button type="button" className="primary" onClick={() => pwa.setGuideOpen(false)}>Entendi</button>
+          </section>
+        </div>
+      )}
     </div>
   );
 }

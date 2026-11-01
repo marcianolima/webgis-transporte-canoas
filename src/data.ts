@@ -158,6 +158,10 @@ export async function loadData(): Promise<AppData> {
           throw new Error("Inventário de paradas incompatível");
         return document;
       } catch (error) {
+        if (name === "vehicles.json" && typeof navigator !== "undefined" && !navigator.onLine) {
+          return { status: "unavailable", generated_at: null, vehicles: [],
+            message: "Sem rede: não é possível consultar posições atuais de veículos." };
+        }
         if (!optional) throw error;
         return name === "map-manifest.json" || name === "stop-inventory.json"
           ? undefined
