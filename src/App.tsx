@@ -12,6 +12,7 @@ import {
   Clock3,
   Database,
   FileText,
+  FileArchive,
   Globe2,
   LayoutDashboard,
   Map,
@@ -49,6 +50,7 @@ import { usePwa } from "./hooks/usePwa";
 import StopCoverage from "./components/StopCoverage";
 const TransportMap = lazy(() => import("./components/TransportMap"));
 const StopsPage = lazy(() => import("./components/StopsPage"));
+const GtfsExplorer = lazy(() => import("./components/GtfsExplorer"));
 const MonitoringPage = lazy(() => import("./components/MonitoringPage"));
 const Chart = lazy(() => import("./components/Chart"));
 const github = "https://github.com/marcianolima/webgis-transporte-canoas";
@@ -67,6 +69,7 @@ const pages = [
   },
   { id: "linhas", label: "Linhas e itinerários", icon: BusFront, group: "" },
   { id: "paradas", label: "Pontos de parada", icon: MapPin, group: "" },
+  { id: "gtfs", label: "Explorador GTFS", icon: FileArchive, group: "" },
   {
     id: "monitoramento",
     label: "Monitoramento",
@@ -94,6 +97,7 @@ const subtitles: Record<string, string> = {
   mapa: "Explore as bases geográficas e as camadas disponíveis.",
   linhas: "Consulte saídas programadas e a sequência de logradouros.",
   paradas: "Localização e proveniência dos pontos disponíveis.",
+  gtfs: "Linhas, trajetos, paradas e viagens programadas a partir de GTFS Static.",
   monitoramento: "Posições observadas, atualização e disponibilidade do GPS.",
   auditoria: "Critérios técnicos para a análise de evidências operacionais.",
   indicadores: "Indicadores reproduzíveis, com suas fórmulas e limitações.",
@@ -918,6 +922,11 @@ function App() {
               {page === "paradas" && (
                 <Suspense fallback={<p>Carregando consulta de paradas…</p>}>
                   <StopsPage data={data} />
+                </Suspense>
+              )}
+              {page === "gtfs" && (
+                <Suspense fallback={<p>Carregando Explorador GTFS…</p>}>
+                  <GtfsExplorer data={data} />
                 </Suspense>
               )}
               {page === "monitoramento" && (
