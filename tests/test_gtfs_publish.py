@@ -2,7 +2,8 @@ from __future__ import annotations
 import zipfile
 from pathlib import Path
 import pytest
-from scripts.publish_gtfs import audit
+from scripts.publish_gtfs import audit, publish_geography
+import json
 
 FIXTURE = {
     "agency.txt": "agency_id,agency_name,agency_url,agency_timezone\n1,Teste,https://example.invalid,America/Sao_Paulo\n",
@@ -39,3 +40,20 @@ def test_rejects_archive_path_traversal(tmp_path:Path):
     with zipfile.ZipFile(path,"a") as z:z.writestr("../invasao.txt","conteudo")
     with pytest.raises(ValueError,match="raiz"):
         audit(path)
+
+
+def test_publish_geojson_preserves_gtfs_ids_and_crs(tmp_path: Path):
+    path = tmp_path / "gtfs.zip"
+    make_zip(path)
+    output = tmp_path / "public"
+    output.mkdir()
+    summary = publish_geography(path, output)
+    assert summary == {"stops": 1, "shapes": 1}
+    stops = json.loads((output / "gtfs-paradas.geojson").read_text())
+    shapes = json.loads((output / "gtfs-itinerarios.geojson").read_text())
+    assert stops["type"] == "FeatureCollection"
+    assert stops["features"][0]["geometry"]["coordinates"] == [-51.19, -29.91]
+    assert stops["features"][0]["properties"]["gtfs_route_ids"] == ["10"]
+    assert stops["features"][0]["properties"]["homologated"] is False
+    assert shapes["features"][0]["geometry"]["coordinates"] == [[-51.19, -29.91]]
+    assert shapes["features"][0]["properties"]["source"] == "GTFS Static"
