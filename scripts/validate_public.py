@@ -45,6 +45,18 @@ def main():
         assert declared['route_short_names']==verified['route_short_names']
         assert declared['shape_ids']==verified['shape_ids']
         assert declared['service_dates']==verified['service_dates']
+        geodata = declared.get('geodata') or {}
+        for filename, kind, geometry in (
+            ('gtfs-paradas.geojson', 'stops', 'Point'),
+            ('gtfs-itinerarios.geojson', 'shapes', 'LineString'),
+        ):
+            features = json.loads((data/filename).read_text(encoding='utf-8'))['features']
+            assert len(features) == geodata.get(kind), (filename, 'quantidade divergente')
+            assert all(f['geometry']['type'] == geometry for f in features), filename
+            assert all(f['properties']['source'] == 'GTFS Static' and
+                       f['properties']['status'] == 'reference' and
+                       f['properties']['homologated'] is False for f in features), filename
+            assert all(isinstance(f['properties']['gtfs_route_ids'], list) for f in features), filename
     else:
         assert not manifest_gtfs.exists(), 'Manifesto GTFS sem arquivo ZIP'
     manifest=json.loads((data/'map-manifest.json').read_text());tilefile=data/manifest['file']
