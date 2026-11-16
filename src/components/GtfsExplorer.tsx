@@ -6,7 +6,7 @@ import type { ChangeEvent } from "react";
 import type { AppData } from "../types";
 import { base, csv, download, number } from "../data";
 import { isServiceActive, loadGtfsUpload, serviceFirstTime, serviceLastTime } from "../gtfs";
-import type { GtfsFeed, GtfsTrip } from "../gtfs";
+import type { GtfsFeed } from "../gtfs";
 
 function timeLabel(time:string) {
   if(!time)return "Não informado";
@@ -23,7 +23,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
   const [query,setQuery]=useState("");
   const [lineCode,setLineCode]=useState("");
   const [variantId,setVariantId]=useState("");
-  const [serviceDate,setServiceDate]=useState("2026-11-16");
+  const [serviceDate,setServiceDate]=useState(()=>new Date().toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"}));
   const mapNode=useRef<HTMLDivElement>(null);
   useEffect(()=>{
     const controller=new AbortController();
@@ -81,7 +81,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
     }else if(outlines.getBounds().isValid())map.fitBounds(outlines.getBounds());
     const timer=window.setTimeout(()=>map.invalidateSize(),100);
     return ()=>{window.clearTimeout(timer);map.remove();};
-  },[feed,chosen?.route_id,representative?.shape_id,data.boundary]);
+  },[feed,chosen?.route_id,representative?.shape_id,representative?.trip_id,data.boundary]);
   async function importFiles(event:ChangeEvent<HTMLInputElement>) {
     const files=Array.from(event.target.files??[]);
     event.target.value="";
@@ -169,7 +169,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
             {hourCounts.length>0&&<div className="gtfs-hour-chart" aria-label="Partidas conhecidas por hora">
               {hourCounts.map(([h,count])=><div key={h} title={h+"h · "+count+" partidas"}><span style={{height:(count/maxHour*100)+"%"}}/><small>{h}h</small></div>)}
             </div>}
-            <div className="table-scroll"><table><thead><tr><th>Viagem</th><th>Sentido GTFS</th><th>Primeiro horário</th><th>Último horário</th><th>Serviço</th></tr></thead>
+            <div className="table-scroll"><table><thead><tr><th>Viagem</th><th>Sentido GTFS</th><th>Primeiro horário preenchido</th><th>Último horário preenchido</th><th>Serviço</th></tr></thead>
               <tbody>{displayedTrips.map(({trip,start,end})=><tr key={trip.trip_id}><td>{trip.trip_id}</td><td>{trip.direction_id==="0"?"0 · ida":trip.direction_id==="1"?"1 · volta":trip.direction_id||"—"}</td><td>{timeLabel(start)}</td><td>{timeLabel(end)}</td><td>{trip.service_id}</td></tr>)}</tbody>
             </table></div>
             <p className="caption">Os horários intermediários não preenchidos no stop_times.txt permanecem ausentes. Intervalos, pontualidade, ETA e realização de viagens não são inferidos a partir do GTFS estático.</p>
