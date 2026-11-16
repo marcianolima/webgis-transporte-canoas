@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "audit_scope": "anexo fornecido nesta conversa; ZIP não publicado neste repositório",
+  "source_filename": "Dados GTFS.zip",
+  "sha256": "d3f56b27364fa620c6eb619c2a757c34b71539bac8f6e61152809ac8f60aab9b",
+  "agency": "Teu Bilhete",
+  "agency_timezone": "America/Sao_Paulo",
+  "validity_start": "2026-11-06",
+  "validity_end": "2027-02-06",
+  "route_short_names": 76,
+  "route_ids": 122,
+  "network_ids": 76,
+  "trip_ids": 2860,
+  "stops": 1582,
+  "stops_used": 1410,
+  "stop_times": 113387,
+  "stop_times_without_departure": 107669,
+  "shape_points": 47990,
+  "shape_ids": 324,
+  "calendar_records": 6,
+  "limitations": [
+    "A programação é estática e não comprova execução de viagens.",
+    "A maior parte dos registros stop_times não possui horário de partida: não interpolar.",
+    "O campo fare_attributes.price=0.0 não comprova gratuidade.",
+    "As IDs de GTFS, NGS e TACOM não foram homologadas como equivalentes."
+  ],
+  "status": "audited_not_deployed"
+}

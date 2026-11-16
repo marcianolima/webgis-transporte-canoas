@@ -1,3 +1,9 @@
+## Explorador GTFS Static (Canoas, 2026-11)
+
+A aplicação agora oferece a página **Explorador GTFS** (`#gtfs`), com consulta de códigos de linha, sentidos/variantes, geometrias, sequência de paradas, calendário de serviço e horários preenchidos a partir de arquivo ZIP ou TXT GTFS. A importação local não envia dados ao servidor e **não simula veículos nem ETA**. Quando `inputs/gtfs-canoas.zip` estiver versionado no repositório, o CI valida e publica o feed para carregamento automático pelo GitHub Pages. O ZIP anexado à conversa não foi copiado automaticamente ao GitHub; apenas sua auditoria descritiva consta em `public/data/gtfs-upload-audit.json`.
+
+Consulte [metodologia, limitações e instruções de publicação](docs/GTFS-INTEGRACAO.md).
+
 # WebGIS Transporte Canoas
 
 Plataforma de informação e análise do transporte coletivo municipal de Canoas/RS, com programação real da Sogal, cartografia local, metodologia aberta e infraestrutura para histórico e fiscalização.
