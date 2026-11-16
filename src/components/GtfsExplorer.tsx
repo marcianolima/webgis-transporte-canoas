@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { ArrowDownToLine, BusFront, CalendarDays, FileArchive, Info, MapPin, Route as RouteIcon } from "lucide-react";
 import type { ChangeEvent } from "react";
 import type { AppData } from "../types";
-import { csv, download, number } from "../data";
+import { base, csv, download, number } from "../data";
 import { isServiceActive, loadGtfsUpload, serviceFirstTime, serviceLastTime } from "../gtfs";
 import type { GtfsFeed, GtfsTrip } from "../gtfs";
 
@@ -25,6 +25,16 @@ export default function GtfsExplorer({data}:{data:AppData}) {
   const [variantId,setVariantId]=useState("");
   const [serviceDate,setServiceDate]=useState("2026-11-16");
   const mapNode=useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    const controller=new AbortController();
+    fetch(base+"data/gtfs-canoas.zip",{signal:controller.signal}).then(response=>{
+      if(!response.ok)throw Error("Feed GTFS não publicado neste deploy");
+      return response.blob();
+    }).then(blob=>loadGtfsUpload(new File([blob],"GTFS Canoas publicado.zip",{type:"application/zip"})))
+      .then(result=>{if(!controller.signal.aborted){setFeed(result);setLineCode(result.routes[0]?.route_short_name??"");setVariantId(result.routes[0]?.route_id??"");}})
+      .catch(()=>{});
+    return ()=>controller.abort();
+  },[]);
   const lines=useMemo(()=>{
     if(!feed)return [];
     const ids=new Set<string>();
