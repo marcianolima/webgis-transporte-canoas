@@ -3,7 +3,7 @@
   "feed_type": "GTFS Static",
   "source": "gtfs-canoas.zip",
   "source_sha256": "d3f56b27364fa620c6eb619c2a757c34b71539bac8f6e61152809ac8f60aab9b",
-  "validated_at": "2026-11-16T02:45:00+00:00",
+  "validated_at": "2026-11-16T02:48:42.596Z",
   "rows": {
     "routes": 122,
     "trips": 2860,
