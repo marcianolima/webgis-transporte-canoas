@@ -1,6 +1,6 @@
 ## Explorador GTFS Static (Canoas, 2026-11)
 
-A aplicação agora oferece a página **Explorador GTFS** (`#gtfs`), com consulta de códigos de linha, sentidos/variantes, geometrias, sequência de paradas, calendário de serviço e horários preenchidos a partir de arquivo ZIP ou TXT GTFS. A importação local não envia dados ao servidor e **não simula veículos nem ETA**. Quando `inputs/gtfs-canoas.zip` estiver versionado no repositório, o CI valida e publica o feed para carregamento automático pelo GitHub Pages. O ZIP anexado à conversa não foi copiado automaticamente ao GitHub; apenas sua auditoria descritiva consta em `public/data/gtfs-upload-audit.json`.
+A aplicação agora oferece a página **Explorador GTFS** (`#gtfs`), com consulta de códigos de linha, sentidos/variantes, geometrias, sequência de paradas, calendário de serviço e horários preenchidos a partir de arquivo ZIP ou TXT GTFS. A importação local não envia dados ao servidor e **não simula veículos nem ETA**. O ZIP original auditado já está versionado no repositório em `inputs/gtfs-canoas.zip` e `public/data/gtfs-canoas.zip` (mesmo blob SHA-256). O CI valida a integridade e publica a base para carregamento automático no GitHub Pages após a recuperação do runner. Nenhuma posição GPS nem ETA é inferida do GTFS.
 
 Consulte [metodologia, limitações e instruções de publicação](docs/GTFS-INTEGRACAO.md).
 

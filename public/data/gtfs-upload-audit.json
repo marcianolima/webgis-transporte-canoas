@@ -24,5 +24,8 @@
     "O campo fare_attributes.price=0.0 não comprova gratuidade.",
     "As IDs de GTFS, NGS e TACOM não foram homologadas como equivalentes."
   ],
-  "status": "audited_not_deployed"
+  "status": "validated_and_versioned_pending_actions_deployment",
+  "git_input_path": "inputs/gtfs-canoas.zip",
+  "git_public_path": "public/data/gtfs-canoas.zip",
+  "notes": "O GitHub Actions não inicializou runner (0 ms de execução); deploy do Pages não confirmado."
 }

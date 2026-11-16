@@ -12,7 +12,6 @@ import io
 import json
 import shutil
 import zipfile
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -31,6 +30,9 @@ def audit(source: Path) -> dict:
         raise ValueError("Pacote GTFS inexistente ou excessivamente grande")
     with zipfile.ZipFile(source) as archive:
         names = archive.namelist()
+        failed_crc = archive.testzip()
+        if failed_crc is not None:
+            raise ValueError(f"Falha de CRC no arquivo GTFS: {failed_crc}")
         if len(names) != len(set(names)):
             raise ValueError("Nomes ZIP duplicados")
         if any("/" in n or "\\" in n or n.startswith(".") for n in names):
@@ -83,6 +85,80 @@ def audit(source: Path) -> dict:
     }
 
 
+
+def publish_geography(source: Path, output: Path) -> dict:
+    """GeoJSON derivados: identificadores GTFS sem misturar com a base TACOM."""
+    from collections import defaultdict
+
+    with zipfile.ZipFile(source) as archive:
+        raw_stops = rows(archive, "stops.txt")
+        raw_routes = rows(archive, "routes.txt")
+        raw_trips = rows(archive, "trips.txt")
+        raw_times = rows(archive, "stop_times.txt")
+        raw_shapes = rows(archive, "shapes.txt")
+
+    trip_to_route = {r["trip_id"]: r["route_id"] for r in raw_trips}
+    routes_by_stop: dict[str, set[str]] = defaultdict(set)
+    for entry in raw_times:
+        routes_by_stop[entry["stop_id"]].add(trip_to_route[entry["trip_id"]])
+
+    shapes_to_routes: dict[str, set[str]] = defaultdict(set)
+    for trip in raw_trips:
+        shapes_to_routes[trip["shape_id"]].add(trip["route_id"])
+
+    route_codes = {route["route_id"]: route["route_short_name"] for route in raw_routes}
+    stop_features = []
+    for entry in raw_stops:
+        route_ids = sorted(routes_by_stop[entry["stop_id"]])
+        stop_features.append({
+            "type": "Feature",
+            "geometry": {"type": "Point", "coordinates": [float(entry["stop_lon"]), float(entry["stop_lat"])]},
+            "properties": {
+                "stop_id": entry["stop_id"], "name": entry["stop_name"],
+                "gtfs_route_ids": route_ids,
+                "gtfs_route_codes": sorted({route_codes[route_id] for route_id in route_ids}),
+                "source": "GTFS Static", "status": "reference", "homologated": False,
+            },
+        })
+
+    grouped_shapes: dict[str, list[tuple[int, float, float]]] = defaultdict(list)
+    for entry in raw_shapes:
+        grouped_shapes[entry["shape_id"]].append(
+            (int(entry["shape_pt_sequence"]), float(entry["shape_pt_lon"]), float(entry["shape_pt_lat"]))
+        )
+    shape_features = []
+    for shape_id, coordinates in sorted(grouped_shapes.items()):
+        if len(coordinates) < 2:
+            raise ValueError(f"GTFS possui shape_id com menos de dois vértices: {shape_id}")
+        route_ids = sorted(shapes_to_routes[shape_id])
+        shape_features.append({
+            "type": "Feature",
+            "geometry": {
+                "type": "LineString",
+                "coordinates": [[lon, lat] for _, lon, lat in sorted(coordinates)],
+            },
+            "properties": {
+                "shape_id": shape_id,
+                "gtfs_route_ids": route_ids,
+                "gtfs_route_codes": sorted({route_codes[route_id] for route_id in route_ids}),
+                "source": "GTFS Static", "status": "reference", "homologated": False,
+            },
+        })
+
+    def write(name: str, features: list[dict]) -> None:
+        (output / name).write_text(
+            json.dumps(
+                {"type": "FeatureCollection", "features": features},
+                ensure_ascii=False, separators=(",", ":"),
+            ) + "\n",
+            encoding="utf-8",
+        )
+
+    write("gtfs-paradas.geojson", stop_features)
+    write("gtfs-itinerarios.geojson", shape_features)
+    return {"stops": len(stop_features), "shapes": len(shape_features)}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("source", type=Path, help="ZIP GTFS de origem, não modificado")
@@ -93,6 +169,7 @@ def main() -> None:
     destination = args.output / "gtfs-canoas.zip"
     if args.source.resolve() != destination.resolve():
         shutil.copyfile(args.source, destination)
+    manifest['geodata'] = publish_geography(destination, args.output)
     (args.output / "gtfs-feed-manifest.json").write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )

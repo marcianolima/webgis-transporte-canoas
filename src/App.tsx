@@ -1715,7 +1715,9 @@ function Reports({
           {[
             ["bairros-oficiais.geojson", "Bairros oficiais"],
             ["censo2022-setores.geojson", "Setores 2022"],
-            ["stops.geojson", "Pontos disponíveis"],
+            ["stops.geojson", "Paradas TACOM (referência parcial)"],
+            ["gtfs-paradas.geojson", "Paradas GTFS (referência separada)"],
+            ["gtfs-itinerarios.geojson", "Trajetos GTFS (referência separada)"],
           ].map(([file, title]) => (
             <a
               className="download-link"
