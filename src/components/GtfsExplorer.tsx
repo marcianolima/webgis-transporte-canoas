@@ -48,7 +48,11 @@ export default function GtfsExplorer({data}:{data:AppData}) {
   const chosen=variants.find(v=>v.route_id===variantId)??variants[0];
   const day=useMemo(()=>new Date(serviceDate+"T12:00:00"),[serviceDate]);
   const activeServices=useMemo(()=>new Set(feed?.calendars.filter(c=>isServiceActive(c,day)).map(c=>c.service_id)??[]),[feed,day]);
-  const trips=useMemo(()=>feed?.trips.filter(t=>t.route_id===chosen?.route_id&&activeServices.has(t.service_id)).sort((a,b)=>serviceFirstTime(feed,a).localeCompare(serviceFirstTime(feed,b)))??[],[feed,chosen,activeServices]);
+  const trips=useMemo(()=>{
+    if(!feed||!chosen)return [];
+    return feed.trips.filter(t=>t.route_id===chosen.route_id&&activeServices.has(t.service_id))
+      .sort((a,b)=>serviceFirstTime(feed,a).localeCompare(serviceFirstTime(feed,b)));
+  },[feed,chosen,activeServices]);
   const displayedTrips=useMemo(()=>trips.map(t=>({trip:t,start:feed?serviceFirstTime(feed,t):"",end:feed?serviceLastTime(feed,t):""})),[feed,trips]);
   const representative=trips[0]??feed?.trips.find(t=>t.route_id===chosen?.route_id);
   const path=feed?.shapes.get(representative?.shape_id??"")??[];
