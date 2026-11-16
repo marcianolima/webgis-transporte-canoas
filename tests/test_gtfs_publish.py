@@ -11,7 +11,7 @@ FIXTURE = {
     "trips.txt": "route_id,service_id,trip_id,shape_id,direction_id\n10,1,T1,S1,0\n",
     "stops.txt": "stop_id,stop_name,stop_lat,stop_lon\nP1,Origem,-29.91,-51.19\n",
     "stop_times.txt": "trip_id,arrival_time,departure_time,stop_id,stop_sequence\nT1,06:00:00,06:00:00,P1,1\n",
-    "shapes.txt": "shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence\nS1,-29.91,-51.19,1\n",
+    "shapes.txt": "shape_id,shape_pt_lat,shape_pt_lon,shape_pt_sequence\nS1,-29.91,-51.19,1\nS1,-29.92,-51.20,2\n",
     "calendar.txt": "service_id,monday,tuesday,wednesday,thursday,friday,saturday,sunday,start_date,end_date\n1,1,1,1,1,0,0,0,20261106,20270206\n",
 }
 def make_zip(path: Path, overrides:dict[str,str]|None=None):
@@ -55,5 +55,5 @@ def test_publish_geojson_preserves_gtfs_ids_and_crs(tmp_path: Path):
     assert stops["features"][0]["geometry"]["coordinates"] == [-51.19, -29.91]
     assert stops["features"][0]["properties"]["gtfs_route_ids"] == ["10"]
     assert stops["features"][0]["properties"]["homologated"] is False
-    assert shapes["features"][0]["geometry"]["coordinates"] == [[-51.19, -29.91]]
+    assert shapes["features"][0]["geometry"]["coordinates"] == [[-51.19, -29.91], [-51.20, -29.92]]
     assert shapes["features"][0]["properties"]["source"] == "GTFS Static"
