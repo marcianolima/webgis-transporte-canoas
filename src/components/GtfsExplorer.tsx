@@ -23,6 +23,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
   const [query,setQuery]=useState("");
   const [lineCode,setLineCode]=useState("");
   const [variantId,setVariantId]=useState("");
+  const [showAllStops,setShowAllStops]=useState(false);
   const [serviceDate,setServiceDate]=useState(()=>new Date().toLocaleDateString("sv-SE",{timeZone:"America/Sao_Paulo"}));
   const mapNode=useRef<HTMLDivElement>(null);
   useEffect(()=>{
@@ -72,9 +73,16 @@ export default function GtfsExplorer({data}:{data:AppData}) {
   },[feed,lineCode]);
   useEffect(()=>{
     if(!mapNode.current||!feed)return;
-    const map=L.map(mapNode.current,{zoomControl:true,attributionControl:false,scrollWheelZoom:false});
+    const map=L.map(mapNode.current,{zoomControl:true,attributionControl:true,scrollWheelZoom:false});
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap contributors"}).addTo(map);
     map.setView([-29.91,-51.17],12);
     const outlines=L.geoJSON(data.boundary as import("geojson").GeoJsonObject,{style:{color:"#8597a7",weight:2,fillOpacity:0.03}}).addTo(map);
+    if(showAllStops){
+      for(const stop of feed.stops){
+        L.circleMarker([stop.stop_lat,stop.stop_lon],{radius:2.4,color:"#506e85",weight:0.6,fillColor:"#506e85",fillOpacity:0.45})
+          .bindTooltip(stop.stop_name+" · ID "+stop.stop_id).addTo(map);
+      }
+    }
     if(path.length){
       const layer=L.polyline(path,{color:"#176f85",weight:5,opacity:0.95}).addTo(map);
       for(const item of servedStops){
@@ -85,7 +93,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
     }else if(outlines.getBounds().isValid())map.fitBounds(outlines.getBounds());
     const timer=window.setTimeout(()=>map.invalidateSize(),100);
     return ()=>{window.clearTimeout(timer);map.remove();};
-  },[feed,chosen?.route_id,representative?.shape_id,representative?.trip_id,data.boundary]);
+  },[feed,chosen?.route_id,representative?.shape_id,representative?.trip_id,data.boundary,showAllStops]);
   async function importFiles(event:ChangeEvent<HTMLInputElement>) {
     const files=Array.from(event.target.files??[]);
     event.target.value="";
@@ -100,7 +108,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
   const exportTrips=displayedTrips.map(({trip,start,end})=>({
     route_id:trip.route_id,route_short_name:chosen?.route_short_name??"",
     trip_id:trip.trip_id,service_id:trip.service_id,direction_id:trip.direction_id,
-    hora_inicial_observada:start,hora_final_observada:end,shape_id:trip.shape_id
+    horario_inicial_preenchido:start,horario_final_preenchido:end,shape_id:trip.shape_id
   }));
   return <div className="gtfs-page">
     <section className="panel gtfs-heading">
@@ -117,7 +125,7 @@ export default function GtfsExplorer({data}:{data:AppData}) {
     {!feed&&<section className="notice warning gtfs-empty">
       <Info size={20}/>
       <div><strong>Selecione o arquivo Dados GTFS.zip para explorar os dados.</strong>
-        <p>O arquivo é processado no próprio navegador, sem enviar o conteúdo a serviços externos. Alternativamente, extraia o ZIP e selecione conjuntamente os arquivos .txt. O feed não foi publicado automaticamente a partir do anexo da conversa.</p>
+        <p>O arquivo é processado no próprio navegador, sem enviar conteúdo a serviços externos. Se o feed publicado não carregar, selecione o ZIP localmente ou extraia-o e selecione conjuntamente os arquivos .txt.</p>
         <p>Auditoria do anexo: 76 códigos de linha, 122 variantes GTFS, 1.582 paradas, 2.860 viagens e 47.990 vértices de trajetos. Vigência declarada: 06/11/2026–06/02/2027.</p>
       </div>
     </section>}
@@ -158,8 +166,9 @@ export default function GtfsExplorer({data}:{data:AppData}) {
                 <input aria-label="Data de serviço GTFS" type="date" value={serviceDate} onChange={e=>setServiceDate(e.target.value)}/>
               </label>
             </div>
+            <label className="gtfs-layer-toggle"><input type="checkbox" checked={showAllStops} onChange={e=>setShowAllStops(e.target.checked)}/> Exibir todas as {number(feed.stops.length)} paradas do GTFS (cinza)</label>
             <div className="gtfs-map" ref={mapNode} role="img" aria-label="Mapa do itinerário GTFS selecionado com paradas numeradas"/>
-            <p className="caption">Linha em azul: geometria do shape_id {representative?.shape_id??"indisponível"}. Pontos em laranja: sequência de paradas de uma viagem de referência. Não é localização do veículo nem garantia de operação.</p>
+            <p className="caption">Base cartográfica © OpenStreetMap; quando indisponível, permanecem o limite municipal e as geometrias GTFS. Linha azul: shape_id {representative?.shape_id??"indisponível"}. Paradas em laranja: sequência de uma viagem de referência. Não é localização de veículo nem comprovação de operação.</p>
           </section>
           <section className="panel">
             <div className="section-heading"><div><h2><CalendarDays size={17}/> Programação GTFS</h2>
@@ -174,16 +183,31 @@ export default function GtfsExplorer({data}:{data:AppData}) {
               {hourCounts.map(([h,count])=><div key={h} title={h+"h · "+count+" partidas"}><span style={{height:(count/maxHour*100)+"%"}}/><small>{h}h</small></div>)}
             </div>}
             <div className="table-scroll"><table><thead><tr><th>Viagem</th><th>Sentido GTFS</th><th>Primeiro horário preenchido</th><th>Último horário preenchido</th><th>Serviço</th></tr></thead>
-              <tbody>{displayedTrips.map(({trip,start,end})=><tr key={trip.trip_id}><td>{trip.trip_id}</td><td>{trip.direction_id==="0"?"0 · ida":trip.direction_id==="1"?"1 · volta":trip.direction_id||"—"}</td><td>{timeLabel(start)}</td><td>{timeLabel(end)}</td><td>{trip.service_id}</td></tr>)}</tbody>
+              <tbody>{displayedTrips.map(({trip,start,end})=><tr key={trip.trip_id}><td>{trip.trip_id}</td><td>{trip.direction_id!==""?"Sentido "+trip.direction_id:"Não informado"}</td><td>{timeLabel(start)}</td><td>{timeLabel(end)}</td><td>{trip.service_id}</td></tr>)}</tbody>
             </table></div>
             <p className="caption">Os horários intermediários não preenchidos no stop_times.txt permanecem ausentes. Intervalos, pontualidade, ETA e realização de viagens não são inferidos a partir do GTFS estático.</p>
           </section>
           <section className="panel">
             <h2><MapPin size={17}/> Paradas em sequência</h2>
-            <div className="gtfs-stops-list">{servedStops.map(s=><div key={s.sequence+"-"+s.stop.stop_id}><b>{s.sequence}</b><span>{s.stop.stop_name}<small> ID {s.stop.stop_id}</small></span></div>)}</div>
+            <div className="gtfs-stops-list">{servedStops.map(s=>{
+              const time=stopSequence.find(t=>t.stop_sequence===s.sequence&&t.stop_id===s.stop.stop_id);
+              return <div key={s.sequence+"-"+s.stop.stop_id}><b>{s.sequence}</b><span>{s.stop.stop_name}<small>ID {s.stop.stop_id} · horário: {timeLabel(time?.departure_time||time?.arrival_time||"")}</small></span></div>;
+            })}</div>
           </section>
         </div>
       </div>
+      <section className="panel">
+        <h2>Dados GTFS geográficos para análise</h2>
+        <p>Exporte separadamente as paradas cadastradas e o itinerário selecionado. São identificadores do feed GTFS, não equivalências homologadas com TACOM.</p>
+        <div className="export-actions">
+          <button onClick={()=>download("gtfs-canoas-paradas.geojson",JSON.stringify({type:"FeatureCollection",features:feed.stops.map(stop=>({type:"Feature",geometry:{type:"Point",coordinates:[stop.stop_lon,stop.stop_lat]},properties:{stop_id:stop.stop_id,stop_name:stop.stop_name,fonte:"GTFS Static",homologacao:"referencia"}}))}))}>
+            <ArrowDownToLine size={16}/> Paradas GTFS · GeoJSON
+          </button>
+          <button disabled={path.length<2} onClick={()=>download("gtfs-canoas-itinerario-"+(chosen?.route_id??"sem-id")+".geojson",JSON.stringify({type:"FeatureCollection",features:[{type:"Feature",geometry:{type:"LineString",coordinates:path.map(([lat,lon])=>[lon,lat])},properties:{route_id:chosen?.route_id,route_short_name:chosen?.route_short_name,shape_id:representative?.shape_id,fonte:"GTFS Static",homologacao:"referencia"}}]}))}>
+            <ArrowDownToLine size={16}/> Itinerário selecionado · GeoJSON
+          </button>
+        </div>
+      </section>
       <section className="panel">
         <h2>Integrações e cautelas metodológicas</h2>
         <p>A identificação GTFS (route_id, shape_id, stop_id) foi mantida separada dos IDs TACOM e da programação NGS. Coincidência textual do código da linha não confirma equivalência de sentidos ou itinerários.</p>
