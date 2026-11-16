@@ -79,15 +79,19 @@ export default function GtfsExplorer({data}:{data:AppData}) {
     const outlines=L.geoJSON(data.boundary as import("geojson").GeoJsonObject,{style:{color:"#8597a7",weight:2,fillOpacity:0.03}}).addTo(map);
     if(showAllStops){
       for(const stop of feed.stops){
+        const label=document.createElement("span");
+        label.textContent=stop.stop_name+" · ID "+stop.stop_id;
         L.circleMarker([stop.stop_lat,stop.stop_lon],{radius:2.4,color:"#506e85",weight:0.6,fillColor:"#506e85",fillOpacity:0.45})
-          .bindTooltip(stop.stop_name+" · ID "+stop.stop_id).addTo(map);
+          .bindTooltip(label).addTo(map);
       }
     }
     if(path.length){
       const layer=L.polyline(path,{color:"#176f85",weight:5,opacity:0.95}).addTo(map);
       for(const item of servedStops){
+        const label=document.createElement("span");
+        label.textContent=item.sequence+" · "+item.stop.stop_name;
         L.circleMarker([item.stop.stop_lat,item.stop.stop_lon],{radius:4,color:"#ffffff",weight:1.5,fillColor:"#d97706",fillOpacity:1})
-          .bindTooltip(item.sequence+" · "+item.stop.stop_name).addTo(map);
+          .bindTooltip(label).addTo(map);
       }
       map.fitBounds(layer.getBounds().pad(0.12));
     }else if(outlines.getBounds().isValid())map.fitBounds(outlines.getBounds());
