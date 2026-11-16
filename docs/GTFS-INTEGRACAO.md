@@ -43,6 +43,24 @@ O script audita os relacionamentos do feed e copia o **ZIP original** sem modifi
 
 Não adicionar tokens, credenciais, URLs autenticadas ou dados sensíveis ao repositório. Uma atualização do GTFS deve substituir o ZIP e repetir a verificação de consistência; o painel indica vigência e não presume atualização automática do fornecedor.
 
+## Publicação de camadas vetoriais abertas
+
+O mesmo script de publicação agora produz dois GeoJSON temáticos, **sem substituir** os arquivos TACOM existentes:
+
+- `public/data/gtfs-paradas.geojson`: 1.582 pontos, identificação `stop_id`, vínculos `gtfs_route_ids`/códigos e proveniência `GTFS Static`.
+- `public/data/gtfs-itinerarios.geojson`: 324 `shape_id` e seus vértices ordenados no CRS WGS 84, com vínculos GTFS por código.
+- `public/data/gtfs-feed-manifest.json`: SHA-256 do ZIP, período, quantidades e saídas geográficas.
+
+A publicação automatizada executa a produção dos arquivos antes da auditoria pública, que valida contagens, estrutura geométrica e rótulos de proveniência. Esses arquivos são de **referência, não homologados para operação**. Podem ser descarregados também na seção Relatórios do WebGIS e abertos em QGIS. Nenhuma correspondência de parada entre GTFS e TACOM é presumida.
+
+O service worker guarda o ZIP GTFS de referência após o primeiro carregamento em rede, sem cache de GPS/posições atuais. O mapa usa mosaicos OpenStreetMap quando há conectividade e mantém os vetores carregados caso contrário.
+
+## Diagnóstico do GitHub Actions
+
+Entre 06/11/2026 e 16/11/2026, as execuções de `ci-pages.yml` foram registradas como `failure` **sem etapas executadas**. No job de 16/11, a API informa `runner_id: 0`, `steps: []`, `duration_ms: 0` e apenas 2 s de duração total da execução. Há duas anotações de erro do GitHub cujo conteúdo não foi disponibilizado pelo conector. A falha precede tanto o GTFS quanto os demais scripts: não é possível atribuí-la a testes, build ou ingestão até o runner ser provisionado.
+
+Recomendado verificar o erro destacado em `Actions > Testes, dados estáticos e GitHub Pages > run falho > build`, além de `Settings > Actions > General` e configurações de cobrança/limites do GitHub Actions. A causa exata depende dessas anotações (restrição, política, cobrança ou infraestrutura), não pode ser inferida apenas pelo status. O [registro operacional #3](https://github.com/marcianolima/webgis-transporte-canoas/issues/3) permanece aberto até a homologação.
+
 ## Compatibilidade e cruzamentos
 - **NGS/Sogal**: saída programada coletada do sistema existente; não sobrescrever com dados GTFS.
 - **TACOM/GoBus**: coordenadas e eventos observados, quando disponíveis; nunca gerar posição de ônibus a partir de `shapes.txt`, `trips.txt` ou horários estáticos.
