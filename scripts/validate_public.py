@@ -35,7 +35,7 @@ def main():
     gtfs = data/'gtfs-canoas.zip'
     manifest_gtfs = data/'gtfs-feed-manifest.json'
     if gtfs.exists():
-        from scripts.publish_gtfs import audit as audit_gtfs
+        from publish_gtfs import audit as audit_gtfs
         assert manifest_gtfs.exists(), 'ZIP GTFS sem manifesto de integridade'
         declared=json.loads(manifest_gtfs.read_text(encoding='utf-8'))
         verified=audit_gtfs(gtfs)
