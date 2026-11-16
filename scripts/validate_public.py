@@ -25,9 +25,28 @@ def main():
                 for c in x:coords(c)
         for f in j['features']:coords(f['geometry']['coordinates'])
     for file in data.iterdir():
+        # O único ZIP público admitido é o GTFS Static validado, nunca um pacote arbitrário.
+        if file.name == 'gtfs-canoas.zip':
+            assert file.stat().st_size < 20_000_000, (file.name, 'GTFS > 20 MB')
+            continue
         assert file.suffix in ('.json','.geojson','.pmtiles'),file.name
         assert file.stat().st_size<20_000_000,(file.name,'artefato > 20 MB')
         if file.suffix!='.pmtiles':assert 'SYNTHETIC' not in file.read_text(),file.name
+    gtfs = data/'gtfs-canoas.zip'
+    manifest_gtfs = data/'gtfs-feed-manifest.json'
+    if gtfs.exists():
+        from scripts.publish_gtfs import audit as audit_gtfs
+        assert manifest_gtfs.exists(), 'ZIP GTFS sem manifesto de integridade'
+        declared=json.loads(manifest_gtfs.read_text(encoding='utf-8'))
+        verified=audit_gtfs(gtfs)
+        assert declared['schema_version']==1 and declared['feed_type']=='GTFS Static'
+        assert declared['source_sha256']==verified['source_sha256']
+        assert declared['rows']==verified['rows']
+        assert declared['route_short_names']==verified['route_short_names']
+        assert declared['shape_ids']==verified['shape_ids']
+        assert declared['service_dates']==verified['service_dates']
+    else:
+        assert not manifest_gtfs.exists(), 'Manifesto GTFS sem arquivo ZIP'
     manifest=json.loads((data/'map-manifest.json').read_text());tilefile=data/manifest['file']
     assert tilefile.read_bytes().startswith(b'PMTiles')
     assert hashlib.sha256(tilefile.read_bytes()).hexdigest()==manifest['sha256']
