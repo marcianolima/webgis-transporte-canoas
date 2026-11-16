@@ -12,7 +12,6 @@ import io
 import json
 import shutil
 import zipfile
-from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -31,6 +30,9 @@ def audit(source: Path) -> dict:
         raise ValueError("Pacote GTFS inexistente ou excessivamente grande")
     with zipfile.ZipFile(source) as archive:
         names = archive.namelist()
+        failed_crc = archive.testzip()
+        if failed_crc is not None:
+            raise ValueError(f"Falha de CRC no arquivo GTFS: {failed_crc}")
         if len(names) != len(set(names)):
             raise ValueError("Nomes ZIP duplicados")
         if any("/" in n or "\\" in n or n.startswith(".") for n in names):
