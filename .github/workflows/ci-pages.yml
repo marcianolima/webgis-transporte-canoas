@@ -37,6 +37,9 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: npm ci
+      - name: Validar e disponibilizar GTFS Static quando ZIP fizer parte do repositorio
+        if: ${{ hashFiles('inputs/gtfs-canoas.zip') != '' }}
+        run: python scripts/publish_gtfs.py inputs/gtfs-canoas.zip
       - run: pip install -r requirements.lock
       - uses: actions/cache@v4
         if: github.event_name == 'schedule' || inputs.refresh_data
