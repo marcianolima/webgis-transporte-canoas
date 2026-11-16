@@ -70,7 +70,7 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(networkFirst(request, SHELL, localUrl("index.html")));
     return;
   }
-  if (/^data\/[\w.-]+\.(json|geojson)$/.test(path)) {
+  if (path === "data/gtfs-canoas.zip" || /^data\/[\w.-]+\.(json|geojson)$/.test(path)) {
     event.respondWith(networkFirst(request, REFERENCES));
     return;
   }
