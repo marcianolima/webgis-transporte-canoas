@@ -128,6 +128,8 @@ def publish_geography(source: Path, output: Path) -> dict:
         )
     shape_features = []
     for shape_id, coordinates in sorted(grouped_shapes.items()):
+        if len(coordinates) < 2:
+            raise ValueError(f"GTFS possui shape_id com menos de dois vértices: {shape_id}")
         route_ids = sorted(shapes_to_routes[shape_id])
         shape_features.append({
             "type": "Feature",
