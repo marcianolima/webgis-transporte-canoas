@@ -77,6 +77,10 @@ export default function StopsPage({ data }: { data: AppData }) {
             : "Cadastro geográfico municipal ainda indisponível. A ausência de pontos não significa ausência de atendimento."}
         </span>
       </div>
+      <div className="notice">
+        <MapPin size={18}/>
+        <span>Há também 1.582 paradas no cadastro <strong>GTFS Static</strong>, com identificadores e vínculos diferentes da fonte TACOM. Consulte o <a href="#gtfs">Explorador GTFS</a> para visualizar a rede complementar. As contagens das duas bases não devem ser somadas sem conciliação de IDs.</span>
+      </div>
       <StopCoverage data={data} onSelectLine={id=>change(setLine,id)}/>
       <section className="panel stops-filter-panel">
         <h2>Consultar paradas</h2>
