@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "feed_type": "GTFS Static",
+  "source": "gtfs-canoas.zip",
+  "source_sha256": "d3f56b27364fa620c6eb619c2a757c34b71539bac8f6e61152809ac8f60aab9b",
+  "validated_at": "2026-11-16T02:45:00+00:00",
+  "rows": {
+    "routes": 122,
+    "trips": 2860,
+    "stops": 1582,
+    "stop_times": 113387,
+    "shapes": 47990,
+    "calendar": 6
+  },
+  "route_short_names": 76,
+  "network_ids": 76,
+  "shape_ids": 324,
+  "service_dates": {
+    "start": "20261106",
+    "end": "20270206"
+  },
+  "notes": [
+    "Horários do GTFS Static são programação e não GPS observado.",
+    "Campos de horário ausentes permanecem ausentes; não interpolar.",
+    "Identificadores GTFS não são automaticamente equivalentes aos IDs TACOM.",
+    "fare_attributes com 0.0 não confirma gratuidade."
+  ]
+}
