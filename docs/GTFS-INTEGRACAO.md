@@ -27,7 +27,7 @@ Arquivo: **Dados GTFS.zip**; SHA-256 `d3f56b27364fa620c6eb619c2a757c34b71539bac8
 **Atenção:** não concluir que 76 códigos GTFS são equivalentes a 76 linhas operacionais vigentes. `fare_attributes.price = 0.0` não é prova de tarifa gratuita. O feed não contém `calendar_dates.txt`; feriados e exceções não estão especificados. A agência informada é `Teu Bilhete`.
 
 ## Publicação permanente e automatizada
-O anexo enviado na conversa não é automaticamente incluído no repositório. Para servir a mesma versão da base a **todos** os visitantes, coloque o ZIP original (não renomeie seus arquivos internos) em:
+**Concluído no GitHub:** o ZIP original foi incluído no repositório, renomeado sem recompressão, e está nas duas pastas: `inputs/gtfs-canoas.zip` e `public/data/gtfs-canoas.zip`. Ambos referenciam o mesmo blob Git; o SHA-256 foi conferido. A publicação automática no Pages depende de o GitHub Actions voltar a iniciar jobs. Para atualizar o feed futuramente, substitua o ZIP de origem neste caminho:
 
 ```
 inputs/gtfs-canoas.zip
@@ -39,7 +39,7 @@ O workflow `.github/workflows/ci-pages.yml` verificará esse caminho, executará
 python scripts/publish_gtfs.py inputs/gtfs-canoas.zip
 ```
 
-O script audita os relacionamentos do feed e copia o **ZIP original** sem modificações para `public/data/gtfs-canoas.zip` (entregue pelo Pages), mais `public/data/gtfs-feed-manifest.json` com SHA-256 e quantidades. Falha de validação interrompe o build. Sem o ZIP, o WebGIS permanece funcional e oferece a importação local no navegador.
+O script audita os relacionamentos do feed e copia o **ZIP original** sem modificações para `public/data/gtfs-canoas.zip` (entregue pelo Pages), mais `public/data/gtfs-feed-manifest.json` com SHA-256 e quantidades. Falha de validação interrompe o build. Com o ZIP versionado, a compilação está preparada para expor o feed automaticamente. A página também oferece importação local como contingência. O GitHub Actions vinha falhando **antes do início do job** em execuções anteriores, sem consumir minutos de runner; ver [Issue #3](https://github.com/marcianolima/webgis-transporte-canoas/issues/3).
 
 Não adicionar tokens, credenciais, URLs autenticadas ou dados sensíveis ao repositório. Uma atualização do GTFS deve substituir o ZIP e repetir a verificação de consistência; o painel indica vigência e não presume atualização automática do fornecedor.
 
@@ -50,4 +50,4 @@ Não adicionar tokens, credenciais, URLs autenticadas ou dados sensíveis ao rep
 - **Segurança viária** (MHTML fornecido): a página de referência menciona 7.664 sinistros com vítimas de 2023 a agosto/2026, 9.232 vítimas, 102 óbitos e somente 2.049 sinistros com ponto cartográfico (27%). Isso **não constitui um dataset** de sinistros importado no WebGIS. Integração de exposição espacial exigirá dados originais georreferenciados, procedência e critérios por trecho e período. Um corredor de ônibus próximo a um sinistro não demonstra relação causal.
 
 ## Validação
-A pipeline já contém `npm run lint`, `npm test`, `npm run build`, `pytest` e validação das camadas existentes. Testes específicos de parsing e consistência do GTFS foram adicionados. A homologação do feed operacional por TACOM/Secretaria permanece distinta dos testes técnicos da interface.
+A pipeline contém `npm run lint`, `npm test`, `npm run build`, `pytest` e validação das camadas existentes, agora com exceção estrita para o ZIP GTFS e conferência de SHA-256, quantidades e calendário contra o manifesto. A execução do Actions não está homologada enquanto o GitHub não provisionar o runner. Testes específicos de parsing e consistência do GTFS foram adicionados. A homologação do feed operacional por TACOM/Secretaria permanece distinta dos testes técnicos da interface.
